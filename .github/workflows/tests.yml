@@ -1,0 +1,21 @@
+name: tests
+
+# 計算の約束（条件より不利にならない・資産が増えも消えもしない）を、変更のたびに確かめる
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --test tests/
