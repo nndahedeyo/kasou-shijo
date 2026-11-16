@@ -1,60 +1,28 @@
 <title>仮想市場 試験所</title>
 <meta name="color-scheme" content="light dark">
 <style>
-:root{--bg:#f6f5f1;--card:#fff;--sunk:#efede6;--ink:#1d1c19;--mute:#6b6860;--line:#dcd8cc;--acc:#0e6b5c;--acc2:#e6f2ef;--sell:#b3412f;--buy:#0e6b5c;--warn:#8a5a00;--warnbg:#fff4dc;--r:12px}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151513;--card:#1e1e1b;--sunk:#262622;--ink:#ecebe6;--mute:#a19d93;--line:#38372f;--acc:#55c2ad;--acc2:#1d302c;--sell:#e07a68;--buy:#55c2ad;--warn:#e5b45a;--warnbg:#2c2414}}
-:root[data-theme="dark"]{--bg:#151513;--card:#1e1e1b;--sunk:#262622;--ink:#ecebe6;--mute:#a19d93;--line:#38372f;--acc:#55c2ad;--acc2:#1d302c;--sell:#e07a68;--buy:#55c2ad;--warn:#e5b45a;--warnbg:#2c2414}
+:root{--bg:#f6f5f1;--card:#fff;--sunk:#efede6;--ink:#1d1c19;--mute:#6b6860;--line:#dcd8cc;--acc:#0e6b5c;--acc2:#e6f2ef;--onacc:#fff;--sell:#b3412f;--buy:#0e6b5c;--warn:#8a5a00;--warnbg:#fff4dc}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151513;--card:#1e1e1b;--sunk:#262622;--ink:#ecebe6;--mute:#a19d93;--line:#38372f;--acc:#55c2ad;--acc2:#1d302c;--onacc:#0d1d1a;--sell:#e07a68;--buy:#55c2ad;--warn:#e5b45a;--warnbg:#2c2414}}
+:root[data-theme="dark"]{--bg:#151513;--card:#1e1e1b;--sunk:#262622;--ink:#ecebe6;--mute:#a19d93;--line:#38372f;--acc:#55c2ad;--acc2:#1d302c;--onacc:#0d1d1a;--sell:#e07a68;--buy:#55c2ad;--warn:#e5b45a;--warnbg:#2c2414}
 *{box-sizing:border-box}
+html,body{overscroll-behavior-x:none}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
-.wrap{max-width:980px;margin:0 auto;padding:16px}
-header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
-h1{font-size:20px;margin:0;letter-spacing:.02em}
-h1 small{font-size:12px;color:var(--mute);font-weight:500;margin-left:8px}
-h2{font-size:16px;margin:0 0 8px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
-.grid{display:grid;gap:12px}
-@media(min-width:820px){.grid.two{grid-template-columns:1fr 1fr}.grid.main{grid-template-columns:1.05fr .95fr}}
-.banner{background:var(--warnbg);color:var(--warn);border-radius:var(--r);padding:10px 14px;font-size:13px;margin-bottom:12px}
-button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 14px;cursor:pointer;min-height:42px}
-button.primary{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
-:root[data-theme="dark"] button.primary{color:#0d1d1a}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) button.primary{color:#0d1d1a}}
-button[disabled]{opacity:.45;cursor:not-allowed}
-button.link{border:0;background:none;color:var(--acc);padding:4px 0;min-height:0;text-decoration:underline}
-input,select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%;min-height:42px}
+.wrap{max-width:520px;margin:0 auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:center;margin:8px 0 20px}
+h1{font-family:"Hiragino Mincho ProN","Noto Serif JP",serif;font-size:22px;letter-spacing:.12em;margin:0}
+h2{font-size:17px;margin:0}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:10px 14px;cursor:pointer;min-height:44px}
+button.primary{background:var(--acc);border-color:var(--acc);color:var(--onacc);font-weight:700;width:100%}
+button.link{border:0;background:none;color:var(--mute);padding:6px 0;min-height:0;font-size:13px}
+input{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;width:100%;min-height:46px}
 label{display:grid;gap:4px;font-size:13px;color:var(--mute)}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .small{font-size:13px;color:var(--mute)}
-.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.seg button{border:0;border-radius:0;min-width:84px}
-.seg button[aria-pressed="true"]{background:var(--acc2);color:var(--acc);font-weight:700}
-.acct{display:flex;gap:12px;align-items:center}
-.avatar{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--acc2);color:var(--acc);font-weight:800;font-size:18px;flex:none}
-.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0}
-.kv dt{color:var(--mute);font-size:13px}.kv dd{margin:0;text-align:right}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left}
-th{color:var(--mute);font-weight:500}
-td.r,th.r{text-align:right}
-.s{color:var(--sell)}.b{color:var(--buy)}
-.timer{font-size:28px;font-weight:700}
-.bar{height:6px;background:var(--sunk);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--acc);transition:width .9s linear}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px;z-index:50}
-.sheet{background:var(--card);border-radius:16px;padding:18px;width:min(100%,420px);display:grid;gap:12px;max-height:88vh;overflow:auto}
-.flow{display:grid;gap:8px}
-.flow div{display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:10px;background:var(--sunk)}
-.flow .out b{color:var(--sell)}.flow .in b{color:var(--buy)}
-.ok{background:var(--acc2);color:var(--acc);border-radius:10px;padding:10px 12px;font-size:14px}
-.hq{display:inline-grid;place-items:center;width:20px;height:20px;min-height:0;padding:0;margin-left:6px;border-radius:999px;font-size:11px;font-weight:700;color:var(--acc);border-color:var(--acc);vertical-align:middle}
-.empty{color:var(--mute);font-size:13px;padding:8px 0}
-.foot{margin-top:28px;font-size:12px;color:var(--mute);text-align:center}
-.quiet{color:var(--mute)!important;font-size:13px;text-decoration:none!important}
-.wrap{max-width:520px}
-header{margin:8px 0 20px}
-h1{font-family:"Hiragino Mincho ProN","Noto Serif JP",serif;font-size:22px;letter-spacing:.12em}
-.idcard{aspect-ratio:1.586;border-radius:20px;padding:22px 24px;color:#fff;position:relative;overflow:hidden;
-  background:radial-gradient(120% 140% at 0% 0%,#1f8a76 0%,#0e5a4d 55%,#0b3f37 100%);box-shadow:0 18px 40px rgba(14,90,77,.28);display:flex;flex-direction:column;justify-content:space-between}
+.mono{font-variant-numeric:tabular-nums}
+.card{background:var(--card);border-radius:18px;padding:16px;box-shadow:0 1px 0 var(--line)}
+.seg{display:flex;background:var(--sunk);border-radius:12px;padding:3px;gap:3px;margin-bottom:12px}
+.seg button{flex:1;border:0;background:none;min-height:40px;border-radius:10px;color:var(--mute)}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.idcard{aspect-ratio:1.586;border-radius:20px;padding:22px 24px;color:#fff;position:relative;overflow:hidden;background:radial-gradient(120% 140% at 0% 0%,#1f8a76 0%,#0e5a4d 55%,#0b3f37 100%);box-shadow:0 18px 40px rgba(14,90,77,.28);display:flex;flex-direction:column;justify-content:space-between}
 .idcard::after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.07)}
 .idcard .nm{font-size:26px;font-weight:700;letter-spacing:.04em}
 .idcard .tag{font-size:12px;opacity:.75}
@@ -62,30 +30,48 @@ h1{font-family:"Hiragino Mincho ProN","Noto Serif JP",serif;font-size:22px;lette
 .idcard .bal div{display:grid}
 .idcard .bal small{font-size:11px;opacity:.7}
 .idcard .bal b{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
-.idcard.flash{animation:glow 1.2s ease}
-@keyframes glow{0%{box-shadow:0 0 0 0 rgba(85,194,173,.9)}100%{box-shadow:0 18px 40px rgba(14,90,77,.28)}}
-.price{display:flex;align-items:baseline;justify-content:space-between;margin:22px 4px 10px}
-.price b{font-size:30px;font-weight:600;font-variant-numeric:tabular-nums}
+.idcard.glow{animation:glow 1.4s ease}
+@keyframes glow{0%{box-shadow:0 0 0 6px rgba(85,194,173,.6)}100%{box-shadow:0 18px 40px rgba(14,90,77,.28)}}
+.price{display:flex;align-items:baseline;justify-content:space-between;margin:22px 4px 6px}
+.price b{font-size:30px;font-weight:600}
 .price span{font-size:12px;color:var(--mute)}
-svg.spark{width:100%;height:44px;display:block;margin-bottom:18px}
-.card{border:0;box-shadow:0 1px 0 var(--line)}
+svg.spark{width:100%;height:40px;display:block;margin-bottom:16px}
+.note{border-radius:14px;padding:12px 14px;font-size:14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.note.ok{background:var(--acc2);color:var(--acc)}.note.warn{background:var(--warnbg);color:var(--warn)}
+.note button{border:0;background:none;color:inherit;min-height:0;padding:0 2px;font-size:18px;line-height:1}
+.hint{font-size:13px;color:var(--mute);margin:10px 2px 12px}
+details.adv summary{font-size:13px;color:var(--mute);cursor:pointer;list-style:none;margin:-4px 2px 10px}
+details.adv summary::-webkit-details-marker{display:none}
+details.adv[open] summary{margin-bottom:6px}
 .wait{display:inline-flex;align-items:center;gap:8px;color:var(--mute);font-size:13px}
 .wait i{width:8px;height:8px;border-radius:50%;background:var(--acc);animation:breathe 2.4s ease-in-out infinite}
 @keyframes breathe{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
-.mine{display:grid;gap:8px;margin-top:14px}
-.mine div{display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:10px 4px;border-top:1px solid var(--line)}
-@media (prefers-reduced-motion:reduce){.wait i,.idcard.flash{animation:none}}
+.mine{display:grid;margin-top:12px}
+.mine div{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px;padding:10px 2px;border-top:1px solid var(--line)}
+.b{color:var(--buy)}.s{color:var(--sell)}
+.foot{margin-top:28px;font-size:12px;color:var(--mute);text-align:center}
+/* 2枚目の画面：右から入り、横に払うと戻る */
+.panel{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+.panel.on{transform:none}
+.panel .bar{display:flex;align-items:center;gap:8px;padding:12px 12px 8px;max-width:520px;width:100%;margin:0 auto}
+.panel .bar button{border:0;background:none;min-height:40px;padding:6px 8px;color:var(--acc);font-weight:600}
+.panel .body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.panel .inner{max-width:520px;margin:0 auto;padding:4px 16px 40px;display:grid;gap:14px}
+.flow{display:grid;gap:8px}
+.flow div{display:flex;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:12px;background:var(--card)}
+.flow span{color:var(--mute);font-size:14px}
+.flow .out b{color:var(--sell)}.flow .in b{color:var(--buy)}
+.how h3{font-size:15px;margin:0 0 4px}
+.how p{margin:0;font-size:14px;color:var(--mute)}
+@media (prefers-reduced-motion:reduce){.wait i,.idcard.glow{animation:none}.panel{transition:none}}
 </style>
 
 <div class="wrap">
-  <header>
-    <h1>仮想市場</h1>
-    <button type="button" class="link quiet" data-act="how">しくみ</button>
-  </header>
+  <header><h1>仮想市場</h1><button type="button" class="link" data-act="how">しくみ</button></header>
   <main id="main"></main>
-  <p class="foot">見本の台帳で動く試作です。本物の資産や英単語は入力しないでください。<button type="button" id="reset" class="link quiet">やり直す</button></p>
-  <div id="pop"></div>
+  <p class="foot">見本の台帳で動く試作です。本物の資産や英単語は入力しないでください。<button type="button" id="reset" class="link">やり直す</button></p>
 </div>
+<div class="panel" id="panel" aria-hidden="true"><div class="bar"><button type="button" data-act="back">‹ 戻る</button></div><div class="body"><div class="inner" id="pbody"></div></div></div>
 
 <script>
 /*__AUCTION__*/
@@ -95,28 +81,30 @@ svg.spark{width:100%;height:44px;display:block;margin-bottom:18px}
 const A = globalThis.Auction;
 const $ = s => document.querySelector(s);
 const U = 1000000n;                    // 最小単位（小数6桁）
-const BATCH = 10;                      // まとめる間隔（秒）
+const BATCH = 10;                      // まとめる間隔（秒）。画面には出さない
+const SLIP = 0.01;                     // 何も指定しないときの、許す値段のずれ（1%）
 const KEY = "kasou-shijo.v1";
 const TOK = {tETH: "試験ETH", tUSD: "試験ドル"};
 const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmt = (v, dp = 4) => { v = BigInt(v); const neg = v < 0n; if (neg) v = -v; const i = v / U, f = (v % U).toString().padStart(6, "0").slice(0, dp); return (neg ? "-" : "") + i.toLocaleString("ja-JP") + (dp ? "." + f : ""); };
+const dp = t => t === "tUSD" ? 2 : 4;
 const toU = x => { const n = Number(x); if (!isFinite(n) || n <= 0) return 0n; return BigInt(Math.round(n * 1e6)); };
 const now = () => Math.floor(Date.now() / 1000);
 
 let S = load();
-function fresh(){ return {acct: null, bal: {tETH: 0n, tUSD: 0n}, orders: [], book: [], hist: [], mine: [], ref: 3000, seq: 1, next: now() + BATCH}; }
+function fresh(){ return {acct: null, bal: {tETH: 0n, tUSD: 0n}, book: [], hist: [], mine: [], ref: 3000, seq: 1, next: now() + BATCH}; }
 function load(){
-  try { const j = JSON.parse(localStorage.getItem(KEY) || "null"); if (j) { j.bal = {tETH: BigInt(j.bal.tETH), tUSD: BigInt(j.bal.tUSD)}; j.next = now() + BATCH; return j; } } catch (e) {}
+  try { const j = JSON.parse(localStorage.getItem(KEY) || "null"); if (j && j.bal) { j.bal = {tETH: BigInt(j.bal.tETH), tUSD: BigInt(j.bal.tUSD)}; j.next = now() + BATCH; j.book = j.book || []; return j; } } catch (e) {}
   return fresh();
 }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S, (k, v) => typeof v === "bigint" ? v.toString() : v)); } catch (e) {} }
 
-let side = "buy", pop = null, flash = null;
+let side = "buy", note = null, pending = null;
 
 /* ---------- アカウント ---------- */
 async function openAccount(name){
   name = name.trim().toLowerCase();
-  if (!/^[a-z0-9][a-z0-9-]{1,19}$/.test(name)) { flash = {k: "warn", m: "名前は、英小文字・数字・ハイフンで2〜20文字にしてください。"}; return render(); }
+  if (!/^[a-z0-9][a-z0-9-]{1,19}$/.test(name)) { note = {k: "warn", m: "名前は、英小文字・数字・ハイフンで2〜20文字にしてください。"}; return render(); }
   let how = "この端末";
   try {
     if (window.PublicKeyCredential && navigator.credentials && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()) {
@@ -124,36 +112,41 @@ async function openAccount(name){
         challenge: crypto.getRandomValues(new Uint8Array(32)), rp: {name: "仮想市場 試験所"},
         user: {id: crypto.getRandomValues(new Uint8Array(16)), name, displayName: name},
         pubKeyCredParams: [{type: "public-key", alg: -7}], authenticatorSelection: {userVerification: "required", residentKey: "preferred"}, timeout: 60000}});
-      how = "パスキー（顔認証・指紋）";
+      how = "パスキー";
     }
   } catch (e) { how = "この端末"; }
   S.acct = {name, how, at: Date.now()};
   S.bal = {tETH: 2n * U, tUSD: 6000n * U};   // 試験用の配布
-  flash = {k: "ok", m: `アカウント「${name}」ができました（${how}）。英単語の控えはありません。試験用に 2 試験ETH と 6,000 試験ドルを配りました。`};
+  note = {k: "ok", m: "アカウントができました。試験用の 2 ETH と 6,000 ドルが入っています。"};
   save(); render();
 }
 
 /* ---------- 注文 ---------- */
 function draft(){
-  const qty = toU($("#qty") && $("#qty").value), px = Number($("#px") && $("#px").value);
-  if (!qty || !(px > 0)) return null;
-  const usd = BigInt(Math.round(Number(qty) * px));      // qty は最小単位、px は ドル/ETH
+  const qty = toU($("#qty") && $("#qty").value);
+  const custom = Number($("#px") && $("#px").value);
+  const px = custom > 0 ? custom : side === "buy" ? S.ref * (1 + SLIP) : S.ref * (1 - SLIP);
+  if (!qty) return null;
+  const usd = BigInt(Math.round(Number(qty) * px));
   return side === "buy"
-    ? {sell: "tUSD", buy: "tETH", sellAmount: usd, buyMin: qty, qty, px}
-    : {sell: "tETH", buy: "tUSD", sellAmount: qty, buyMin: usd, qty, px};
+    ? {sell: "tUSD", buy: "tETH", sellAmount: usd, buyMin: qty, qty, px, custom: custom > 0}
+    : {sell: "tETH", buy: "tUSD", sellAmount: qty, buyMin: usd, qty, px, custom: custom > 0};
 }
 function free(t){ return S.bal[t] - S.mine.filter(o => o.st === "open" && o.sell === t).reduce((s, o) => s + BigInt(o.sellAmount), 0n); }
+function hint(d){
+  if (!d) return "量を入れてください。";
+  if (free(d.sell) < d.sellAmount) return `<span class="s">${TOK[d.sell]}が足りません。</span>`;
+  return d.custom ? `1 ETH あたり ${d.px.toFixed(2)} ドル${side === "buy" ? "まで" : "から"}で約定します。` : `いまの値段より1%以上不利なら、約定せずに消えます。`;
+}
 
 async function sign(d){
   try {
-    if (S.acct.how.startsWith("パスキー") && navigator.credentials) {
-      await navigator.credentials.get({publicKey: {challenge: crypto.getRandomValues(new Uint8Array(32)), userVerification: "required", timeout: 60000}});
-    }
-  } catch (e) { flash = {k: "warn", m: "署名をやめました。注文は出ていません。"}; pop = null; return render(); }
+    if (S.acct.how === "パスキー" && navigator.credentials) await navigator.credentials.get({publicKey: {challenge: crypto.getRandomValues(new Uint8Array(32)), userVerification: "required", timeout: 60000}});
+  } catch (e) { note = {k: "warn", m: "署名をやめました。注文は出ていません。"}; closePanel(); return render(); }
   const o = {id: "m" + S.seq++, owner: S.acct.name, sell: d.sell, buy: d.buy, sellAmount: String(d.sellAmount), buyMin: String(d.buyMin), deadline: now() + 60, st: "open", px: d.px, qty: String(d.qty), side};
   S.mine.unshift(o); S.book.push(o);
-  pop = null; flash = {k: "ok", m: "注文を出しました。約定するまで、資産はあなたのアカウントから動きません。"};
-  save(); render();
+  note = {k: "ok", m: "注文を出しました。約定するまで、資産はあなたのアカウントから動きません。"};
+  save(); closePanel(); render();
 }
 
 /* ---------- ほかの参加者（見本） ---------- */
@@ -163,143 +156,155 @@ function botOrders(){
   for (let i = 0; i < n; i++) {
     const sell = Math.random() < 0.5, px = S.ref * (1 + (Math.random() - (sell ? 0.35 : 0.65)) * 0.012);
     const qty = BigInt(Math.round((0.05 + Math.random() * 0.6) * 1e6)), usd = BigInt(Math.round(Number(qty) * px));
-    out.push({id: "b" + S.seq++, owner: "参加者" + (1 + Math.floor(Math.random() * 40)), sell: sell ? "tETH" : "tUSD", buy: sell ? "tUSD" : "tETH",
-      sellAmount: String(sell ? qty : usd), buyMin: String(sell ? usd : qty), deadline: now() + BATCH + 1, st: "open", px, qty: String(qty), side: sell ? "sell" : "buy"});
+    out.push({id: "b" + S.seq++, owner: "参加者", sell: sell ? "tETH" : "tUSD", buy: sell ? "tUSD" : "tETH",
+      sellAmount: String(sell ? qty : usd), buyMin: String(sell ? usd : qty), deadline: now() + BATCH + 1, st: "open"});
   }
   return out;
 }
 
 function clearNow(){
   const t = now();
-  const keepQ = $("#qty") && $("#qty").value, keepP = $("#px") && $("#px").value; if (keepQ) { S.lastQty = keepQ; S.lastPx = keepP; }
   S.book = S.book.filter(o => o.st === "open" && o.deadline > t);
-  for (const o of S.mine) if (o.st === "open" && o.deadline <= t) o.st = "expired";
-  const orders = S.book.concat(botOrders());
-  const r = A.clear(orders, "tETH", "tUSD", t);
+  let expired = false;
+  for (const o of S.mine) if (o.st === "open" && o.deadline <= t) { o.st = "expired"; expired = true; }
+  const r = A.clear(S.book.concat(botOrders()), "tETH", "tUSD", t);
   const price = r.price ? Number(r.price.n) / Number(r.price.d) : null;
-  let vol = 0n, mineFill = null;
+  let got = null;
   for (const f of r.fills) {
-    if (f.sell === "tETH") vol += BigInt(f.give);
     const m = S.mine.find(o => o.id === f.id);
-    if (m) {
-      S.bal[f.sell] -= BigInt(f.give); S.bal[f.buy] += BigInt(f.receive);
-      const left = BigInt(m.sellAmount) - BigInt(f.give);
-      m.filled = (BigInt(m.filled || 0) + BigInt(f.give)).toString();
-      if (left > 0n) { m.buyMin = String(BigInt(m.buyMin) * left / BigInt(m.sellAmount)); m.sellAmount = String(left); } else m.st = "done";
-      m.last = {give: f.give, receive: f.receive, price};
-      mineFill = {m, f};
-    }
+    if (!m) continue;
+    S.bal[f.sell] -= BigInt(f.give); S.bal[f.buy] += BigInt(f.receive);
+    const left = BigInt(m.sellAmount) - BigInt(f.give);
+    if (left > 0n) { m.buyMin = String(BigInt(m.buyMin) * left / BigInt(m.sellAmount)); m.sellAmount = String(left); } else m.st = "done";
+    m.last = {give: f.give, receive: f.receive, price};
+    got = {f, price};
   }
   S.book = S.book.filter(o => o.st === "open");
   if (price) S.ref = price;
-  S.hist.unshift({t, price, vol: vol.toString(), n: r.fills.length, total: orders.length});
-  S.hist = S.hist.slice(0, 12);
-  if (mineFill) flash = {k: "ok", m: `約定しました：${fmt(mineFill.f.give)} ${TOK[mineFill.f.sell]} を渡して、${fmt(mineFill.f.receive)} ${TOK[mineFill.f.buy]} を受け取りました。このまとめの全員が 1 試験ETH = ${price.toFixed(2)} 試験ドルで約定しています。`};
-  S.next = t + BATCH; save(); render(!!mineFill);
+  S.hist.unshift({t, price}); S.hist = S.hist.slice(0, 30);
+  if (got) note = {k: "ok", m: `約定しました。${fmt(got.f.give, dp(got.f.sell))} ${TOK[got.f.sell]}を渡して、${fmt(got.f.receive, dp(got.f.buy))} ${TOK[got.f.buy]}を受け取りました。同じまとめの全員が、1 ETH ${got.price.toFixed(2)} ドルで約定しています。`};
+  else if (expired) note = {k: "warn", m: "期限までに条件に合う相手がいなかった注文が、何も起きずに消えました。資産は動いていません。"};
+  S.next = t + BATCH; save();
+  live(!!got || expired, !!got);
 }
 window.__clearNow = clearNow;
 
 /* ---------- 画面 ---------- */
-const HELP = {
-  batch: ["まとめて約定", "注文を一つずつ順番に処理せず、10秒ごとに集めて、全員を同じ値段で約定させます。順番が関係ないので、注文を見て先回りする売買（MEV）で不利になりません。値段は、約定する量が一番多くなるところに決まります。"],
-  intent: ["注文の条件だけに署名", "署名するのは「これを最大これだけ渡して、これ以上を、この時刻までに受け取る」という条件だけです。トークンを使う許可（承認）や、操作の委任は含まれません。条件より不利な約定は作れないので、誰が約定の計算をしても資産は盗めません。"],
-  nocust: ["預からない", "注文を出しても、資産はあなたのアカウントから動きません。動くのは約定した瞬間だけで、渡すものと受け取るものが同時に入れ替わります。期限までに約定しなければ、何も起きずに注文が消えます。"],
-  passkey: ["パスキーで開設", "顔認証や指紋でアカウントを作ります。鍵は端末の安全な場所に保管され、英単語12個の控えは要りません。試作のこの段階では、パスキーは本人確認の体験だけに使っています。チェーンにつなぐ段階で、パスキーが本当の鍵になります。"],
-};
-const HOW = `<div class="overlay" data-hclose><div class="sheet" role="dialog" aria-modal="true"><h2>しくみ</h2>${Object.values(HELP).map(([t, b]) => `<div><b>${t}</b><p class="small" style="margin:4px 0 0">${b}</p></div>`).join("")}<div class="row" style="justify-content:flex-end"><button type="button" class="primary" data-hx>閉じる</button></div></div></div>`;
-const hp = k => `<button type="button" class="hq" data-help="${k}" aria-label="説明：${HELP[k][0]}">?</button>`;
-
 function spark(){
   const ps = S.hist.slice().reverse().map(h => h.price).filter(Boolean);
-  if (ps.length < 2) return "";
-  const lo = Math.min(...ps), hi = Math.max(...ps), w = 300, h = 44, k = hi - lo || 1;
+  if (ps.length < 2) return `<svg class="spark" aria-hidden="true"></svg>`;
+  const lo = Math.min(...ps), hi = Math.max(...ps), w = 300, h = 40, k = hi - lo || 1;
   const pts = ps.map((p, i) => `${(i / (ps.length - 1) * w).toFixed(1)},${(h - 4 - (p - lo) / k * (h - 8)).toFixed(1)}`).join(" ");
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="var(--acc)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>`;
 }
-function render(glow){
+const noteHtml = () => note ? `<div class="note ${note.k}" data-flash><span>${esc(note.m)}</span><button type="button" data-act="dismiss" aria-label="閉じる">×</button></div>` : "";
+function ordersHtml(){
+  const open = S.mine.filter(o => o.st === "open").length;
+  const done = S.mine.filter(o => o.last).slice(0, 3);
+  return (open ? `<p style="margin:14px 0 0;display:flex;justify-content:space-between;align-items:center"><span class="wait"><i></i>約定を待っています</span><button type="button" class="link" data-act="cancel">取り消す</button></p>` : "")
+    + (done.length ? `<div class="mine">${done.map(o => `<div><span class="${o.side === "buy" ? "b" : "s"}">${o.side === "buy" ? "買い" : "売り"}</span><span class="mono">${fmt(o.last.receive, dp(o.buy))} ${o.buy === "tUSD" ? "ドル" : "ETH"} 受け取り</span><span class="mono small">${o.last.price.toFixed(2)}</span></div>`).join("")}</div>` : "");
+}
+
+function render(){
   const m = $("#main");
   if (!S.acct) {
-    m.innerHTML = `<div class="idcard" style="opacity:.9"><div><div class="tag">あなたのアカウント</div><div class="nm">　</div></div><div class="tag">顔認証か指紋で開きます。英単語の控えはいりません。</div></div>
-      <div class="card" style="margin-top:18px"><label>名前<input id="nm" placeholder="nnda" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="20"></label>
-        <div class="row" style="margin-top:12px"><button type="button" class="primary" data-act="open" style="width:100%">開く</button></div>
-        ${flash ? `<p class="small" style="color:var(--warn);margin:10px 0 0">${esc(flash.m)}</p>` : ""}</div>`;
-    return bind();
+    m.innerHTML = `<div class="idcard" style="opacity:.92"><div><div class="tag">あなたのアカウント</div><div class="nm">&nbsp;</div></div><div class="tag">顔認証か指紋で開きます。英単語の控えはいりません。</div></div>
+      <div class="card" style="margin-top:18px">${noteHtml()}<label>名前<input id="nm" placeholder="nnda" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="20"></label>
+        <div style="margin-top:12px"><button type="button" class="primary" data-act="open">開く</button></div></div>`;
+    return;
   }
-  const d = draft();
-  const open = S.mine.filter(o => o.st === "open");
-  m.innerHTML = `<div class="idcard${glow ? " flash" : ""}">
-      <div><div class="tag">${esc(S.acct.how)}</div><div class="nm">${esc(S.acct.name)}</div></div>
-      <div class="bal"><div><small>試験ETH</small><b id="b-eth">${fmt(S.bal.tETH)}</b></div><div><small>試験ドル</small><b id="b-usd">${fmt(S.bal.tUSD, 2)}</b></div></div>
-    </div>
-    <div class="price"><b class="mono">${S.ref.toFixed(2)}</b><span>試験ドル ／ 1 試験ETH</span></div>
-    ${spark()}
-    ${flash ? `<div class="${flash.k === "ok" ? "ok" : "banner"}" data-flash style="margin-bottom:14px">${esc(flash.m)}</div>` : ""}
+  m.innerHTML = `<div class="idcard" id="idc"><div><div class="tag">${esc(S.acct.how)}</div><div class="nm">${esc(S.acct.name)}</div></div>
+      <div class="bal"><div><small>ETH</small><b id="b-eth">${fmt(S.bal.tETH)}</b></div><div><small>ドル</small><b id="b-usd">${fmt(S.bal.tUSD, 2)}</b></div></div></div>
+    <div class="price"><b class="mono" id="px-now">${S.ref.toFixed(2)}</b><span>ドル ／ 1 ETH</span></div>
+    <div id="spark">${spark()}</div>
+    <div id="note">${noteHtml()}</div>
     <div class="card">
-      <div class="seg" role="group" aria-label="売り買い" style="width:100%"><button type="button" style="flex:1" data-side="buy" aria-pressed="${side === "buy"}">買う</button><button type="button" style="flex:1" data-side="sell" aria-pressed="${side === "sell"}">売る</button></div>
-      <div class="grid two" style="margin-top:12px">
-        <label>${side === "buy" ? "買う量（ETH）" : "売る量（ETH）"}<input id="qty" inputmode="decimal" value="${esc(S.lastQty || "0.1")}"></label>
-        <label>${side === "buy" ? "この値段まで" : "この値段から"}<input id="px" inputmode="decimal" value="${esc(S.lastPx || (side === "buy" ? (S.ref * 1.005).toFixed(2) : (S.ref * 0.995).toFixed(2)))}"></label>
-      </div>
-      <p class="small" id="dsum" style="margin:10px 0">${d ? summary(d) : "量と値段を入れてください。"}</p>
-      <button type="button" class="primary" data-act="review" style="width:100%">確かめる</button>
-      ${open.length ? `<p style="margin:14px 0 0"><span class="wait"><i></i>約定を待っています（${open.length}件）</span> <button type="button" class="link quiet" data-act="cancel">取り消す</button></p>` : ""}
-      ${mineHtml()}
+      <div class="seg" role="group" aria-label="売り買い"><button type="button" data-side="buy" aria-pressed="${side === "buy"}">買う</button><button type="button" data-side="sell" aria-pressed="${side === "sell"}">売る</button></div>
+      <label>${side === "buy" ? "買う量（ETH）" : "売る量（ETH）"}<input id="qty" inputmode="decimal" value="${esc(S.lastQty || "0.1")}"></label>
+      <p class="hint" id="hint">${hint(draft())}</p>
+      <details class="adv"><summary>値段を自分で決める ›</summary><label>1 ETH あたり${side === "buy" ? "この値段まで" : "この値段から"}（ドル）<input id="px" inputmode="decimal" placeholder="${(side === "buy" ? S.ref * (1 + SLIP) : S.ref * (1 - SLIP)).toFixed(2)}"></label></details>
+      <button type="button" class="primary" data-act="review">${side === "buy" ? "買う" : "売る"}</button>
+      <div id="orders">${ordersHtml()}</div>
     </div>`;
-  bind();
+  const h = () => { S.lastQty = $("#qty").value; $("#hint").innerHTML = hint(draft()); };
+  $("#qty").oninput = h; $("#px").oninput = h;
 }
-function summary(d){
-  const ok = free(d.sell) >= d.sellAmount;
-  return `${side === "buy" ? "最大" : ""} <b>${fmt(d.sellAmount, d.sell === "tUSD" ? 2 : 4)} ${TOK[d.sell]}</b> を渡して、<b>${fmt(d.buyMin, d.buy === "tUSD" ? 2 : 4)} ${TOK[d.buy]}</b> 以上を受け取る。期限は60秒。` + (ok ? "" : `<br><span style="color:var(--sell)">${TOK[d.sell]}が足りません。</span>`);
-}
-function mineHtml(){
-  const done = S.mine.filter(o => o.last).slice(0, 4);
-  if (!done.length) return "";
-  return `<div class="mine">${done.map(o => `<div><span class="${o.side === "buy" ? "b" : "s"}">${o.side === "buy" ? "買い" : "売り"}</span><span class="mono">${fmt(o.last.receive, o.buy === "tUSD" ? 2 : 4)} ${o.buy === "tUSD" ? "ドル" : "ETH"} を受け取り</span><span class="mono small">@${o.last.price.toFixed(2)}</span></div>`).join("")}</div>`;
-}
-function histHtml(){
-  if (!S.hist.length) return `<p class="empty">最初のまとめを待っています。</p>`;
-  return `<table><tr><th>時刻</th><th class="r">全員の値段</th><th class="r">約定した量</th><th class="r">約定／注文</th></tr>${S.hist.map(h => `<tr>
-    <td class="mono">${new Date(h.t * 1000).toLocaleTimeString("ja-JP")}</td>
-    <td class="r mono">${h.price ? h.price.toFixed(2) : "—"}</td><td class="r mono">${fmt(h.vol, 3)} ETH</td><td class="r mono">${h.n}／${h.total}</td></tr>`).join("")}</table>`;
+// まとめのたびに、入力中の欄や開いている画面には触らず、数字と注文の状態だけを入れ替える
+function live(changedNote, glow){
+  if (!S.acct || !$("#b-eth")) return;
+  $("#b-eth").textContent = fmt(S.bal.tETH); $("#b-usd").textContent = fmt(S.bal.tUSD, 2);
+  $("#px-now").textContent = S.ref.toFixed(2); $("#spark").innerHTML = spark();
+  $("#orders").innerHTML = ordersHtml();
+  if (changedNote) $("#note").innerHTML = noteHtml();
+  if ($("#hint") && $("#qty")) $("#hint").innerHTML = hint(draft());
+  const ph = $("#px"); if (ph) ph.placeholder = (side === "buy" ? S.ref * (1 + SLIP) : S.ref * (1 - SLIP)).toFixed(2);
+  if (glow) { const c = $("#idc"); c.classList.remove("glow"); void c.offsetWidth; c.classList.add("glow"); }
 }
 
+/* ---------- 2枚目の画面 ---------- */
+const HOW = [
+  ["預からない", "注文を出しても、資産はあなたのアカウントから動きません。動くのは約定した瞬間だけで、渡すものと受け取るものが同時に入れ替わります。期限までに約定しなければ、何も起きずに注文が消えます。"],
+  ["条件だけに署名する", "署名するのは「これを最大これだけ渡して、これ以上を、この時刻までに受け取る」という条件だけです。トークンを使う許可（承認）や、操作の委任は含まれません。条件より不利な約定は作れないので、誰が約定の計算をしても資産は盗めません。"],
+  ["全員同じ値段でまとめて約定", "注文を一つずつ順番に処理せず、少しの間集めてから、全員を同じ値段で約定させます。順番が関係ないので、注文を見て先回りする売買で不利になりません。値段は、約定する量が一番多くなるところに決まります。"],
+  ["何も指定しなければ1%まで", "値段を決めずに注文すると、いまの値段から1%までのずれを許す条件になります。それより不利になる相手しかいなければ、約定せずに消えます。値段は「値段を自分で決める」から指定できます。"],
+  ["顔認証で開くアカウント", "顔認証や指紋でアカウントを作ります。鍵は端末の安全な場所に保管され、英単語12個の控えはいりません。試作のこの段階では、顔認証は本人確認の体験だけに使っています。チェーンにつなぐ段階で、本当の鍵になります。"],
+];
+function openPanel(html){
+  $("#pbody").innerHTML = html; const p = $("#panel");
+  p.style.transform = ""; p.classList.add("on"); p.setAttribute("aria-hidden", "false");
+  $(".panel .body").scrollTop = 0;
+}
+function closePanel(){ const p = $("#panel"); p.style.transform = ""; p.classList.remove("on"); p.setAttribute("aria-hidden", "true"); pending = null; }
 function reviewHtml(d){
-  return `<div class="overlay" data-close><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="rv">
-    <h2 id="rv">署名する内容</h2>
-    <div class="flow">
-      <div class="out"><span>出ていくかもしれないもの（最大）</span><b class="mono">${fmt(d.sellAmount, d.sell === "tUSD" ? 2 : 4)} ${TOK[d.sell]}</b></div>
-      <div class="in"><span>入ってくるもの（最低）</span><b class="mono">${fmt(d.buyMin, d.buy === "tUSD" ? 2 : 4)} ${TOK[d.buy]}</b></div>
+  return `<h2 id="rv">署名する内容</h2>
+    <div class="flow sheet">
+      <div class="out"><span>出ていくかもしれないもの（最大）</span><b class="mono">${fmt(d.sellAmount, dp(d.sell))} ${TOK[d.sell]}</b></div>
+      <div class="in"><span>入ってくるもの（最低）</span><b class="mono">${fmt(d.buyMin, dp(d.buy))} ${TOK[d.buy]}</b></div>
       <div><span>受け取り先</span><b>${esc(S.acct.name)}（あなた）</b></div>
-      <div><span>期限</span><b>60秒後まで。過ぎたら何も起きずに消える</b></div>
+      <div><span>期限</span><b>1分。過ぎたら何も起きずに消える</b></div>
+      <p class="small" style="margin:4px 2px 0">この署名には、トークンを使う許可（承認）も、操作の委任も含まれていません。これより不利な約定は作れません。</p>
     </div>
-    <p class="small" style="margin:0">この署名には、トークンを使う許可（承認）も、操作の委任も含まれていません。これより不利な約定は作れません。</p>
-    <div class="row" style="justify-content:flex-end"><button type="button" data-act="back">やめる</button><button type="button" class="primary" data-act="sign">${S.acct.how.startsWith("パスキー") ? "顔認証で署名" : "署名する"}</button></div>
-  </div></div>`;
+    <button type="button" class="primary" data-act="sign">${S.acct.how === "パスキー" ? "顔認証で署名" : "署名する"}</button>`;
 }
+const howHtml = () => `<h2>しくみ</h2><div class="sheet how" style="display:grid;gap:18px">${HOW.map(([t, b]) => `<div><h3>${t}</h3><p>${b}</p></div>`).join("")}</div>`;
 
-function bind(){
-  document.querySelectorAll("[data-act]").forEach(b => b.onclick = () => act(b.dataset.act));
-  document.querySelectorAll("[data-side]").forEach(b => b.onclick = () => { side = b.dataset.side; S.lastPx = ""; render(); });
-  ["#qty", "#px"].forEach(id => { const el = $(id); if (el) el.oninput = () => { S.lastQty = $("#qty").value; S.lastPx = $("#px").value; const d = draft(); $("#dsum").innerHTML = d ? summary(d) : "量と値段を入れてください。"; }; });
-  $("#pop").innerHTML = pop ? pop : "";
-  document.querySelectorAll("#pop [data-act]").forEach(b => b.onclick = () => act(b.dataset.act));
-}
+// 横に払うと戻る（左右どちらでも）。縦のスクロールの邪魔はしない
+(() => {
+  const p = $("#panel"); let x0 = 0, y0 = 0, dx = 0, track = false;
+  p.addEventListener("touchstart", e => { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; dx = 0; track = null; }, {passive: true});
+  p.addEventListener("touchmove", e => {
+    const t = e.touches[0], mx = t.clientX - x0, my = t.clientY - y0;
+    if (track === null && (Math.abs(mx) > 10 || Math.abs(my) > 10)) track = Math.abs(mx) > Math.abs(my) * 1.4;
+    if (!track) return;
+    dx = mx; p.style.transition = "none"; p.style.transform = `translateX(${dx}px)`;
+  }, {passive: true});
+  p.addEventListener("touchend", () => {
+    if (!track) return; p.style.transition = "";
+    if (Math.abs(dx) > 70) { p.style.transform = `translateX(${dx > 0 ? 100 : -100}%)`; setTimeout(closePanel, 220); } else p.style.transform = "";
+  });
+})();
+
 async function act(a){
   if (a === "open") return openAccount($("#nm").value);
-  if (a === "how") { $("#pop").innerHTML = HOW; return; }
-  if (a === "review") { const d = draft(); if (!d) return; if (free(d.sell) < d.sellAmount) { flash = {k: "warn", m: `${TOK[d.sell]}が足りません。`}; return render(); } pop = reviewHtml(d); window.__d = d; flash = null; return bind(); }
-  if (a === "back") { pop = null; return bind(); }
-  if (a === "sign") return sign(window.__d);
-  if (a === "cancel") { for (const o of S.mine) if (o.st === "open") o.st = "cancelled"; S.book = S.book.filter(o => !o.id.startsWith("m")); flash = {k: "ok", m: "約定待ちの注文を取り消しました。資産は最初から動いていません。"}; save(); return render(); }
+  if (a === "how") return openPanel(howHtml());
+  if (a === "back") return closePanel();
+  if (a === "dismiss") { note = null; $("#note") ? ($("#note").innerHTML = "") : render(); return; }
+  if (a === "review") {
+    const d = draft(); if (!d) return;
+    if (free(d.sell) < d.sellAmount) { note = {k: "warn", m: `${TOK[d.sell]}が足りません。`}; $("#note").innerHTML = noteHtml(); return; }
+    pending = d; return openPanel(reviewHtml(d));
+  }
+  if (a === "sign") return pending && sign(pending);
+  if (a === "cancel") { for (const o of S.mine) if (o.st === "open") o.st = "cancelled"; S.book = S.book.filter(o => !o.id.startsWith("m")); note = {k: "ok", m: "注文を取り消しました。資産は最初から動いていません。"}; save(); return live(true); }
 }
 document.addEventListener("click", e => {
-  const h = e.target.closest && e.target.closest("[data-help]");
-  if (h) { const [t, b] = HELP[h.dataset.help]; $("#pop").innerHTML = `<div class="overlay" data-hclose><div class="sheet" role="dialog" aria-modal="true"><h2>${esc(t)}</h2><p style="margin:0">${esc(b)}</p><div class="row" style="justify-content:flex-end"><button type="button" class="primary" data-hx>閉じる</button></div></div></div>`; return; }
-  if (e.target.closest && e.target.closest("[data-hx]") || (e.target.hasAttribute && e.target.hasAttribute("data-hclose"))) { $("#pop").innerHTML = pop || ""; bind(); }
-  if (e.target.hasAttribute && e.target.hasAttribute("data-close")) { pop = null; bind(); }
+  const t = e.target.closest && e.target.closest("[data-act],[data-side]");
+  if (!t) return;
+  if (t.dataset.side) { side = t.dataset.side; S.lastQty = $("#qty") ? $("#qty").value : S.lastQty; return render(); }
+  act(t.dataset.act);
 });
-$("#reset").onclick = () => { S = fresh(); flash = null; pop = null; save(); render(); };
-
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#panel").classList.contains("on")) closePanel(); });
+$("#reset").onclick = () => { S = fresh(); note = null; closePanel(); save(); render(); };
 setInterval(() => { if (S.acct && S.next - now() <= 0) clearNow(); }, 1000);
 render();
 </script>
