@@ -19,3 +19,8 @@ jobs:
         with:
           node-version: "22"
       - run: node --test "tests/*.test.js"
+      - name: index.html が app.html と core/auction.js から作り直されているか
+        run: python3 tools/build.py && git diff --exit-code index.html
+      - run: npm install --no-save playwright@1.63.0 && npx playwright install --with-deps chromium
+      - name: 画面を操作して確かめる（スマホとパソコンの幅）
+        run: node tests/app.e2e.js 400 && node tests/app.e2e.js 1200

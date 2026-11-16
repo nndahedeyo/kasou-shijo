@@ -102,4 +102,5 @@ function meetsLimit(f) {
   return r * big(o.sellAmount) >= big(o.buyMin) * g;   // 受け取り/渡し ≥ buyMin/sellAmount
 }
 
-module.exports = {clear, validate, meetsLimit};
+if (typeof module !== "undefined" && module.exports) module.exports = {clear, validate, meetsLimit};
+else globalThis.Auction = {clear, validate, meetsLimit};

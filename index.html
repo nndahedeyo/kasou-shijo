@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="資産を預からず、注文の条件だけに署名し、全員同じ値段でまとめて約定する取引の試験所（テスト用）">
+<title>仮想市場 試験所</title>
+<meta name="color-scheme" content="light dark">
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--sunk:#efede6;--ink:#1d1c19;--mute:#6b6860;--line:#dcd8cc;--acc:#0e6b5c;--acc2:#e6f2ef;--sell:#b3412f;--buy:#0e6b5c;--warn:#8a5a00;--warnbg:#fff4dc;--r:12px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151513;--card:#1e1e1b;--sunk:#262622;--ink:#ecebe6;--mute:#a19d93;--line:#38372f;--acc:#55c2ad;--acc2:#1d302c;--sell:#e07a68;--buy:#55c2ad;--warn:#e5b45a;--warnbg:#2c2414}}
+:root[data-theme="dark"]{--bg:#151513;--card:#1e1e1b;--sunk:#262622;--ink:#ecebe6;--mute:#a19d93;--line:#38372f;--acc:#55c2ad;--acc2:#1d302c;--sell:#e07a68;--buy:#55c2ad;--warn:#e5b45a;--warnbg:#2c2414}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+h1{font-size:20px;margin:0;letter-spacing:.02em}
+h1 small{font-size:12px;color:var(--mute);font-weight:500;margin-left:8px}
+h2{font-size:16px;margin:0 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.grid{display:grid;gap:12px}
+@media(min-width:820px){.grid.two{grid-template-columns:1fr 1fr}.grid.main{grid-template-columns:1.05fr .95fr}}
+.banner{background:var(--warnbg);color:var(--warn);border-radius:var(--r);padding:10px 14px;font-size:13px;margin-bottom:12px}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 14px;cursor:pointer;min-height:42px}
+button.primary{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+:root[data-theme="dark"] button.primary{color:#0d1d1a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) button.primary{color:#0d1d1a}}
+button[disabled]{opacity:.45;cursor:not-allowed}
+button.link{border:0;background:none;color:var(--acc);padding:4px 0;min-height:0;text-decoration:underline}
+input,select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%;min-height:42px}
+label{display:grid;gap:4px;font-size:13px;color:var(--mute)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.small{font-size:13px;color:var(--mute)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;border-radius:0;min-width:84px}
+.seg button[aria-pressed="true"]{background:var(--acc2);color:var(--acc);font-weight:700}
+.acct{display:flex;gap:12px;align-items:center}
+.avatar{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--acc2);color:var(--acc);font-weight:800;font-size:18px;flex:none}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0}
+.kv dt{color:var(--mute);font-size:13px}.kv dd{margin:0;text-align:right}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--mute);font-weight:500}
+td.r,th.r{text-align:right}
+.s{color:var(--sell)}.b{color:var(--buy)}
+.timer{font-size:28px;font-weight:700}
+.bar{height:6px;background:var(--sunk);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--acc);transition:width .9s linear}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px;z-index:50}
+.sheet{background:var(--card);border-radius:16px;padding:18px;width:min(100%,420px);display:grid;gap:12px;max-height:88vh;overflow:auto}
+.flow{display:grid;gap:8px}
+.flow div{display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:10px;background:var(--sunk)}
+.flow .out b{color:var(--sell)}.flow .in b{color:var(--buy)}
+.ok{background:var(--acc2);color:var(--acc);border-radius:10px;padding:10px 12px;font-size:14px}
+.hq{display:inline-grid;place-items:center;width:20px;height:20px;min-height:0;padding:0;margin-left:6px;border-radius:999px;font-size:11px;font-weight:700;color:var(--acc);border-color:var(--acc);vertical-align:middle}
+.empty{color:var(--mute);font-size:13px;padding:8px 0}
+.foot{margin-top:16px;font-size:12px;color:var(--mute)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>仮想市場 試験所<small>見本の台帳で動く試作</small></h1>
+    <div class="row"><button type="button" id="reset" class="link">最初からやり直す</button></div>
+  </header>
+  <div class="banner">まだチェーンにはつながっていません。資産も注文も、この画面の中の見本の台帳だけで動いています。本物の資産やリカバリーフレーズは、ここで絶対に入力しないでください。</div>
+  <main id="main"></main>
+  <div id="pop"></div>
+  <p class="foot">資産を預からない・注文の条件だけに署名する・全員同じ値段でまとめて約定する、という仕組みの試作です。次の段階で、Base Sepolia（値打ちのないテスト用ネットワーク）につなぎます。</p>
+</div>
+
+<script>
+// 仮想市場 試験所：まとめて約定させる計算（バッチオークション）。チェーンに関係なく動く。
+// 注文は「sell を最大 sellAmount 渡して、1あたり buyMin/sellAmount 以上の割合で buy を受け取る。deadline まで有効」。
+// 数量はすべて最小単位の整数（BigInt）。端数で誰かが損をしたり、資産が増えたり消えたりしないように計算する。
+"use strict";
+
+const big = v => BigInt(v);
+const cmp = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+// 値段は「Aの1単位あたりのBの単位数」を分数 n/d で表す
+const cmpP = (p, q) => cmp(p.n * q.d, q.n * p.d);
+
+function validate(o, now) {
+  const errs = [];
+  for (const k of ["id", "owner", "sell", "buy", "sellAmount", "buyMin", "deadline"]) if (o[k] === undefined) errs.push(k + " がない");
+  if (errs.length) return errs;
+  if (o.sell === o.buy) errs.push("同じ銘柄どうし");
+  if (big(o.sellAmount) <= 0n) errs.push("渡す量が0以下");
+  if (big(o.buyMin) <= 0n) errs.push("受け取る量が0以下");
+  if (Number(o.deadline) <= now) errs.push("期限切れ");
+  return errs;
+}
+
+// A を売る注文の下限値段 = buyMin/sellAmount、B を売る注文の上限値段 = sellAmount/buyMin（どちらも B per A）
+function limitOf(o, A) {
+  return o.sell === A ? {n: big(o.buyMin), d: big(o.sellAmount)} : {n: big(o.sellAmount), d: big(o.buyMin)};
+}
+
+function volumes(asks, bids, p) {
+  // asks: A を売る、bids: B を売る（A を買う）
+  const a = asks.filter(o => cmpP(o.lim, p) <= 0), b = bids.filter(o => cmpP(o.lim, p) >= 0);
+  const S = a.reduce((s, o) => s + o.amt, 0n);                 // 売りに出た A
+  const D = b.reduce((s, o) => s + (o.amt * p.d) / p.n, 0n);  // B で買える A
+  return {a, b, S, D, V: S < D ? S : D};
+}
+
+// 一つの組（A と B）について、全員同じ値段で約定させる
+function clear(orders, A, B, now) {
+  const live = orders.filter(o => !validate(o, now).length && ((o.sell === A && o.buy === B) || (o.sell === B && o.buy === A)))
+    .map(o => ({o, amt: big(o.sellAmount), lim: limitOf(o, A)}));
+  let asks = live.filter(x => x.o.sell === A), bids = live.filter(x => x.o.sell === B);
+  for (let guard = 0; guard < 50; guard++) {
+    // 候補の値段：各注文の条件の値段と、隣り合う値段のちょうど中間
+    const lims = [...asks, ...bids].map(x => x.lim).sort(cmpP);
+    const cands = [];
+    lims.forEach((p, i) => { cands.push(p); const q = lims[i + 1]; if (q && cmpP(p, q) < 0) cands.push({n: p.n * q.d + q.n * p.d, d: 2n * p.d * q.d}); });
+    // 約定する量が一番多い値段を選ぶ。同じ量の値段が並ぶときは、その真ん中（どちらか一方だけが得をしない）
+    let maxV = 0n; const vs = cands.map(p => { const v = volumes(asks, bids, p); if (v.V > maxV) maxV = v.V; return {p, v}; });
+    const top = vs.filter(x => x.v.V === maxV && maxV > 0n);
+    const best = top.length ? top[Math.floor((top.length - 1) / 2)] : null;
+    if (!best) return {price: null, fills: []};
+    const res = settle(best.p, best.v);
+    const bad = res.fills.find(f => !meetsLimit(f));
+    if (!bad) return {price: best.p, fills: res.fills};
+    // 端数のせいで条件を割る注文があれば、その注文を外してやり直す
+    asks = asks.filter(x => x.o.id !== bad.id); bids = bids.filter(x => x.o.id !== bad.id);
+  }
+  return {price: null, fills: []};
+}
+
+function prorata(list, total, key) {
+  // total を list の key の比で整数に分ける。合計がぴったり total になるよう、余りは先頭から1ずつ
+  const sum = list.reduce((s, x) => s + x[key], 0n);
+  const out = list.map(x => (sum === 0n ? 0n : (x[key] * total) / sum));
+  let r = total - out.reduce((s, v) => s + v, 0n);
+  for (let i = 0; r > 0n; i = (i + 1) % out.length) { if (out[i] < list[i][key]) { out[i] += 1n; r -= 1n; } }
+  return out;
+}
+
+function settle(p, {a, b, S, D}) {
+  const fills = [];
+  if (S <= D) {
+    // A を売る側が全部約定。B を売る側は、受け取る A を比例で分ける
+    const want = b.map(x => ({...x, cap: (x.amt * p.d) / p.n}));
+    const aOut = prorata(want, S, "cap");
+    const bGive = aOut.map(q => (q * p.n + p.d - 1n) / p.d);          // 切り上げ（買う側が端数を払う）
+    const bRecv = a.map(x => (x.amt * p.n) / p.d);                      // 切り捨て
+    let surplus = bGive.reduce((s, v) => s + v, 0n) - bRecv.reduce((s, v) => s + v, 0n);
+    for (let i = 0; surplus > 0n && i < bGive.length; i++) { const t = bGive[i] - (aOut[i] * p.n) / p.d; const cut = t < surplus ? t : surplus; bGive[i] -= cut; surplus -= cut; }
+    a.forEach((x, i) => fills.push(fill(x, x.amt, bRecv[i])));
+    b.forEach((x, i) => fills.push(fill(x, bGive[i], aOut[i])));
+    if (surplus > 0n) bRecv[0] += surplus, fills[0].receive = String(bRecv[0]);
+  } else {
+    // B を売る側が全部約定。A を売る側は、渡す A を比例で分ける
+    const aIn = b.map(x => (x.amt * p.d) / p.n);
+    const T = aIn.reduce((s, v) => s + v, 0n);
+    const aGive = prorata(a, T, "amt");
+    const bRecv = aGive.map(q => (q * p.n) / p.d);
+    let surplus = b.reduce((s, x) => s + x.amt, 0n) - bRecv.reduce((s, v) => s + v, 0n);
+    // B の売り手は全量を渡し、受け取る側の切り捨てで余った B は A の売り手に先頭から返す
+    for (let i = 0; surplus > 0n && i < bRecv.length; i++) { bRecv[i] += 1n; surplus -= 1n; if (i === bRecv.length - 1) i = -1; }
+    a.forEach((x, i) => fills.push(fill(x, aGive[i], bRecv[i])));
+    b.forEach((x, i) => fills.push(fill(x, x.amt, aIn[i])));
+  }
+  return {fills: fills.filter(f => f.give !== "0" || f.receive !== "0")};
+}
+
+function fill(x, give, receive) {
+  return {id: x.o.id, owner: x.o.owner, sell: x.o.sell, buy: x.o.buy, give: String(give), receive: String(receive), _o: x.o};
+}
+function meetsLimit(f) {
+  const o = f._o, g = big(f.give), r = big(f.receive);
+  if (g > big(o.sellAmount) || g < 0n || r < 0n) return false;
+  return r * big(o.sellAmount) >= big(o.buyMin) * g;   // 受け取り/渡し ≥ buyMin/sellAmount
+}
+
+if (typeof module !== "undefined" && module.exports) module.exports = {clear, validate, meetsLimit};
+else globalThis.Auction = {clear, validate, meetsLimit};
+
+</script>
+<script>
+"use strict";
+const A = globalThis.Auction;
+const $ = s => document.querySelector(s);
+const U = 1000000n;                    // 最小単位（小数6桁）
+const BATCH = 10;                      // まとめる間隔（秒）
+const KEY = "kasou-shijo.v1";
+const TOK = {tETH: "試験ETH", tUSD: "試験ドル"};
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = (v, dp = 4) => { v = BigInt(v); const neg = v < 0n; if (neg) v = -v; const i = v / U, f = (v % U).toString().padStart(6, "0").slice(0, dp); return (neg ? "-" : "") + i.toLocaleString("ja-JP") + (dp ? "." + f : ""); };
+const toU = x => { const n = Number(x); if (!isFinite(n) || n <= 0) return 0n; return BigInt(Math.round(n * 1e6)); };
+const now = () => Math.floor(Date.now() / 1000);
+
+let S = load();
+function fresh(){ return {acct: null, bal: {tETH: 0n, tUSD: 0n}, orders: [], book: [], hist: [], mine: [], ref: 3000, seq: 1, next: now() + BATCH}; }
+function load(){
+  try { const j = JSON.parse(localStorage.getItem(KEY) || "null"); if (j) { j.bal = {tETH: BigInt(j.bal.tETH), tUSD: BigInt(j.bal.tUSD)}; j.next = now() + BATCH; return j; } } catch (e) {}
+  return fresh();
+}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S, (k, v) => typeof v === "bigint" ? v.toString() : v)); } catch (e) {} }
+
+let side = "buy", pop = null, flash = null;
+
+/* ---------- アカウント ---------- */
+async function openAccount(name){
+  name = name.trim().toLowerCase();
+  if (!/^[a-z0-9][a-z0-9-]{1,19}$/.test(name)) { flash = {k: "warn", m: "名前は、英小文字・数字・ハイフンで2〜20文字にしてください。"}; return render(); }
+  let how = "この端末";
+  try {
+    if (window.PublicKeyCredential && navigator.credentials && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()) {
+      await navigator.credentials.create({publicKey: {
+        challenge: crypto.getRandomValues(new Uint8Array(32)), rp: {name: "仮想市場 試験所"},
+        user: {id: crypto.getRandomValues(new Uint8Array(16)), name, displayName: name},
+        pubKeyCredParams: [{type: "public-key", alg: -7}], authenticatorSelection: {userVerification: "required", residentKey: "preferred"}, timeout: 60000}});
+      how = "パスキー（顔認証・指紋）";
+    }
+  } catch (e) { how = "この端末"; }
+  S.acct = {name, how, at: Date.now()};
+  S.bal = {tETH: 2n * U, tUSD: 6000n * U};   // 試験用の配布
+  flash = {k: "ok", m: `アカウント「${name}」ができました（${how}）。英単語の控えはありません。試験用に 2 試験ETH と 6,000 試験ドルを配りました。`};
+  save(); render();
+}
+
+/* ---------- 注文 ---------- */
+function draft(){
+  const qty = toU($("#qty") && $("#qty").value), px = Number($("#px") && $("#px").value);
+  if (!qty || !(px > 0)) return null;
+  const usd = BigInt(Math.round(Number(qty) * px));      // qty は最小単位、px は ドル/ETH
+  return side === "buy"
+    ? {sell: "tUSD", buy: "tETH", sellAmount: usd, buyMin: qty, qty, px}
+    : {sell: "tETH", buy: "tUSD", sellAmount: qty, buyMin: usd, qty, px};
+}
+function free(t){ return S.bal[t] - S.mine.filter(o => o.st === "open" && o.sell === t).reduce((s, o) => s + BigInt(o.sellAmount), 0n); }
+
+async function sign(d){
+  try {
+    if (S.acct.how.startsWith("パスキー") && navigator.credentials) {
+      await navigator.credentials.get({publicKey: {challenge: crypto.getRandomValues(new Uint8Array(32)), userVerification: "required", timeout: 60000}});
+    }
+  } catch (e) { flash = {k: "warn", m: "署名をやめました。注文は出ていません。"}; pop = null; return render(); }
+  const o = {id: "m" + S.seq++, owner: S.acct.name, sell: d.sell, buy: d.buy, sellAmount: String(d.sellAmount), buyMin: String(d.buyMin), deadline: now() + 60, st: "open", px: d.px, qty: String(d.qty), side};
+  S.mine.unshift(o); S.book.push(o);
+  pop = null; flash = {k: "ok", m: `注文を公開しました。次のまとめ（${Math.max(0, S.next - now())}秒後）で約定を探します。資産は約定するまであなたのアカウントにあります。`};
+  save(); render();
+}
+
+/* ---------- ほかの参加者（見本） ---------- */
+function botOrders(){
+  S.ref = Math.max(500, S.ref * (1 + (Math.random() - 0.5) * 0.01));
+  const n = 3 + Math.floor(Math.random() * 4), out = [];
+  for (let i = 0; i < n; i++) {
+    const sell = Math.random() < 0.5, px = S.ref * (1 + (Math.random() - (sell ? 0.35 : 0.65)) * 0.012);
+    const qty = BigInt(Math.round((0.05 + Math.random() * 0.6) * 1e6)), usd = BigInt(Math.round(Number(qty) * px));
+    out.push({id: "b" + S.seq++, owner: "参加者" + (1 + Math.floor(Math.random() * 40)), sell: sell ? "tETH" : "tUSD", buy: sell ? "tUSD" : "tETH",
+      sellAmount: String(sell ? qty : usd), buyMin: String(sell ? usd : qty), deadline: now() + BATCH + 1, st: "open", px, qty: String(qty), side: sell ? "sell" : "buy"});
+  }
+  return out;
+}
+
+function clearNow(){
+  const t = now();
+  S.book = S.book.filter(o => o.st === "open" && o.deadline > t);
+  for (const o of S.mine) if (o.st === "open" && o.deadline <= t) o.st = "expired";
+  const orders = S.book.concat(botOrders());
+  const r = A.clear(orders, "tETH", "tUSD", t);
+  const price = r.price ? Number(r.price.n) / Number(r.price.d) : null;
+  let vol = 0n, mineFill = null;
+  for (const f of r.fills) {
+    if (f.sell === "tETH") vol += BigInt(f.give);
+    const m = S.mine.find(o => o.id === f.id);
+    if (m) {
+      S.bal[f.sell] -= BigInt(f.give); S.bal[f.buy] += BigInt(f.receive);
+      const left = BigInt(m.sellAmount) - BigInt(f.give);
+      m.filled = (BigInt(m.filled || 0) + BigInt(f.give)).toString();
+      if (left > 0n) { m.buyMin = String(BigInt(m.buyMin) * left / BigInt(m.sellAmount)); m.sellAmount = String(left); } else m.st = "done";
+      m.last = {give: f.give, receive: f.receive, price};
+      mineFill = {m, f};
+    }
+  }
+  S.book = S.book.filter(o => o.st === "open");
+  if (price) S.ref = price;
+  S.hist.unshift({t, price, vol: vol.toString(), n: r.fills.length, total: orders.length});
+  S.hist = S.hist.slice(0, 12);
+  if (mineFill) flash = {k: "ok", m: `約定しました：${fmt(mineFill.f.give)} ${TOK[mineFill.f.sell]} を渡して、${fmt(mineFill.f.receive)} ${TOK[mineFill.f.buy]} を受け取りました。このまとめの全員が 1 試験ETH = ${price.toFixed(2)} 試験ドルで約定しています。`};
+  S.next = t + BATCH; save(); render();
+}
+window.__clearNow = clearNow;
+
+/* ---------- 画面 ---------- */
+const HELP = {
+  batch: ["まとめて約定", "注文を一つずつ順番に処理せず、10秒ごとに集めて、全員を同じ値段で約定させます。順番が関係ないので、注文を見て先回りする売買（MEV）で不利になりません。値段は、約定する量が一番多くなるところに決まります。"],
+  intent: ["注文の条件だけに署名", "署名するのは「これを最大これだけ渡して、これ以上を、この時刻までに受け取る」という条件だけです。トークンを使う許可（承認）や、操作の委任は含まれません。条件より不利な約定は作れないので、誰が約定の計算をしても資産は盗めません。"],
+  nocust: ["預からない", "注文を出しても、資産はあなたのアカウントから動きません。動くのは約定した瞬間だけで、渡すものと受け取るものが同時に入れ替わります。期限までに約定しなければ、何も起きずに注文が消えます。"],
+  passkey: ["パスキーで開設", "顔認証や指紋でアカウントを作ります。鍵は端末の安全な場所に保管され、英単語12個の控えは要りません。試作のこの段階では、パスキーは本人確認の体験だけに使っています。チェーンにつなぐ段階で、パスキーが本当の鍵になります。"],
+};
+const hp = k => `<button type="button" class="hq" data-help="${k}" aria-label="説明：${HELP[k][0]}">?</button>`;
+
+function render(){
+  const m = $("#main");
+  if (!S.acct) {
+    m.innerHTML = `<div class="grid two">
+      <div class="card"><h2>アカウントを開く${hp("passkey")}</h2>
+        <p class="small">名前を決めて、顔認証か指紋で開くだけです。英単語の控え、手数料のための準備、ウォレットの接続はいりません。</p>
+        <label>アカウントの名前<input id="nm" placeholder="例：nnda" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="20"></label>
+        <div class="row" style="margin-top:10px"><button type="button" class="primary" data-act="open">顔認証で開設する</button></div>
+        ${flash ? `<p class="small" style="color:var(--warn)">${esc(flash.m)}</p>` : ""}
+      </div>
+      <div class="card"><h2>ここで試すこと</h2>
+        <ul class="small" style="margin:0;padding-left:18px">
+          <li>アカウントを開くと、そのまま資産の置き場所になる${hp("passkey")}</li>
+          <li>注文は「条件」だけに署名する${hp("intent")}</li>
+          <li>10秒ごとに、全員同じ値段でまとめて約定する${hp("batch")}</li>
+          <li>約定するまで、資産はあなたのアカウントから動かない${hp("nocust")}</li>
+        </ul></div></div>`;
+    return bind();
+  }
+  const d = draft(), base = side === "buy" ? "tUSD" : "tETH";
+  const left = Math.max(0, S.next - now());
+  const open = S.mine.filter(o => o.st === "open");
+  m.innerHTML = `${flash ? `<div class="${flash.k === "ok" ? "ok" : "banner"}" data-flash style="margin-bottom:12px">${esc(flash.m)}</div>` : ""}
+  <div class="grid main">
+    <div class="grid">
+      <div class="card"><div class="acct"><div class="avatar">${esc(S.acct.name[0].toUpperCase())}</div>
+        <div><b>${esc(S.acct.name)}</b><div class="small">開設：${esc(S.acct.how)}${hp("passkey")}</div></div></div>
+        <dl class="kv" style="margin-top:12px">
+          <dt>試験ETH</dt><dd class="mono" id="b-eth">${fmt(S.bal.tETH)}</dd>
+          <dt>試験ドル</dt><dd class="mono" id="b-usd">${fmt(S.bal.tUSD, 2)}</dd>
+          <dt>うち注文に使える分</dt><dd class="mono small">${fmt(free("tETH"))} ETH ／ ${fmt(free("tUSD"), 2)} ドル</dd>
+        </dl></div>
+      <div class="card"><h2>注文${hp("intent")}</h2>
+        <div class="seg" role="group" aria-label="売り買い"><button type="button" data-side="buy" aria-pressed="${side === "buy"}">買う</button><button type="button" data-side="sell" aria-pressed="${side === "sell"}">売る</button></div>
+        <div class="grid two" style="margin-top:10px">
+          <label>${side === "buy" ? "買う量（最低・試験ETH）" : "売る量（試験ETH）"}<input id="qty" inputmode="decimal" value="${esc(S.lastQty || "0.1")}"></label>
+          <label>${side === "buy" ? "この値段まで払う" : "この値段以上で売る"}（試験ドル／ETH）<input id="px" inputmode="decimal" value="${esc(S.lastPx || (side === "buy" ? (S.ref * 1.005).toFixed(2) : (S.ref * 0.995).toFixed(2)))}"></label>
+        </div>
+        <p class="small" id="dsum" style="margin:8px 0">${d ? summary(d) : "量と値段を入れてください。"}</p>
+        <button type="button" class="primary" data-act="review">内容を確かめる</button></div>
+    </div>
+    <div class="grid">
+      <div class="card"><h2>次のまとめ${hp("batch")}</h2>
+        <div class="row" style="justify-content:space-between"><span class="timer mono" id="tm">${left}秒</span><span class="small">いまの目安：1 試験ETH ≈ ${S.ref.toFixed(2)} 試験ドル</span></div>
+        <div class="bar"><i id="tb" style="width:${(1 - left / BATCH) * 100}%"></i></div>
+        <p class="small" style="margin:8px 0 0">公開されている注文：${S.book.length}件（あなたの注文 ${open.length}件）</p></div>
+      <div class="card"><h2>あなたの注文${hp("nocust")}</h2>${mineHtml()}</div>
+      <div class="card"><h2>これまでのまとめ</h2>${histHtml()}</div>
+    </div>
+  </div>`;
+  bind();
+}
+function summary(d){
+  const ok = free(d.sell) >= d.sellAmount;
+  return `${side === "buy" ? "最大" : ""} <b>${fmt(d.sellAmount, d.sell === "tUSD" ? 2 : 4)} ${TOK[d.sell]}</b> を渡して、<b>${fmt(d.buyMin, d.buy === "tUSD" ? 2 : 4)} ${TOK[d.buy]}</b> 以上を受け取る。期限は60秒。` + (ok ? "" : `<br><span style="color:var(--sell)">${TOK[d.sell]}が足りません。</span>`);
+}
+function mineHtml(){
+  if (!S.mine.length) return `<p class="empty">まだ注文はありません。</p>`;
+  const st = {open: "約定待ち", done: "約定", expired: "期限切れ（何も起きずに消えました）", cancelled: "取り消し"};
+  return `<table><tr><th>注文</th><th>状態</th><th class="r">結果</th></tr>${S.mine.slice(0, 8).map(o => `<tr>
+    <td><span class="${o.side === "buy" ? "b" : "s"}">${o.side === "buy" ? "買い" : "売り"}</span> ${fmt(o.qty)} ETH ／ ${Number(o.px).toFixed(2)}</td>
+    <td>${st[o.st]}${o.st === "open" && o.filled ? "（一部）" : ""}</td>
+    <td class="r mono">${o.last ? `${fmt(o.last.receive, o.buy === "tUSD" ? 2 : 4)} ${o.buy === "tUSD" ? "ドル" : "ETH"}<br><span class="small">@${o.last.price.toFixed(2)}</span>` : "—"}</td></tr>`).join("")}</table>
+    ${S.mine.some(o => o.st === "open") ? `<button type="button" class="link" data-act="cancel">約定待ちの注文を取り消す</button>` : ""}`;
+}
+function histHtml(){
+  if (!S.hist.length) return `<p class="empty">最初のまとめを待っています。</p>`;
+  return `<table><tr><th>時刻</th><th class="r">全員の値段</th><th class="r">約定した量</th><th class="r">約定／注文</th></tr>${S.hist.map(h => `<tr>
+    <td class="mono">${new Date(h.t * 1000).toLocaleTimeString("ja-JP")}</td>
+    <td class="r mono">${h.price ? h.price.toFixed(2) : "—"}</td><td class="r mono">${fmt(h.vol, 3)} ETH</td><td class="r mono">${h.n}／${h.total}</td></tr>`).join("")}</table>`;
+}
+
+function reviewHtml(d){
+  return `<div class="overlay" data-close><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="rv">
+    <h2 id="rv">署名する内容${hp("intent")}</h2>
+    <div class="flow">
+      <div class="out"><span>出ていくかもしれないもの（最大）</span><b class="mono">${fmt(d.sellAmount, d.sell === "tUSD" ? 2 : 4)} ${TOK[d.sell]}</b></div>
+      <div class="in"><span>入ってくるもの（最低）</span><b class="mono">${fmt(d.buyMin, d.buy === "tUSD" ? 2 : 4)} ${TOK[d.buy]}</b></div>
+      <div><span>受け取り先</span><b>${esc(S.acct.name)}（あなた）</b></div>
+      <div><span>期限</span><b>60秒後まで。過ぎたら何も起きずに消える</b></div>
+    </div>
+    <p class="small" style="margin:0">この署名には、トークンを使う許可（承認）も、操作の委任も含まれていません。これより不利な約定は作れません。</p>
+    <div class="row" style="justify-content:flex-end"><button type="button" data-act="back">やめる</button><button type="button" class="primary" data-act="sign">${S.acct.how.startsWith("パスキー") ? "顔認証で署名" : "署名する"}</button></div>
+  </div></div>`;
+}
+
+function bind(){
+  document.querySelectorAll("[data-act]").forEach(b => b.onclick = () => act(b.dataset.act));
+  document.querySelectorAll("[data-side]").forEach(b => b.onclick = () => { side = b.dataset.side; S.lastPx = ""; render(); });
+  ["#qty", "#px"].forEach(id => { const el = $(id); if (el) el.oninput = () => { S.lastQty = $("#qty").value; S.lastPx = $("#px").value; const d = draft(); $("#dsum").innerHTML = d ? summary(d) : "量と値段を入れてください。"; }; });
+  $("#pop").innerHTML = pop ? pop : "";
+  document.querySelectorAll("#pop [data-act]").forEach(b => b.onclick = () => act(b.dataset.act));
+}
+async function act(a){
+  if (a === "open") return openAccount($("#nm").value);
+  if (a === "review") { const d = draft(); if (!d) return; if (free(d.sell) < d.sellAmount) { flash = {k: "warn", m: `${TOK[d.sell]}が足りません。`}; return render(); } pop = reviewHtml(d); window.__d = d; flash = null; return bind(); }
+  if (a === "back") { pop = null; return bind(); }
+  if (a === "sign") return sign(window.__d);
+  if (a === "cancel") { for (const o of S.mine) if (o.st === "open") o.st = "cancelled"; S.book = S.book.filter(o => !o.id.startsWith("m")); flash = {k: "ok", m: "約定待ちの注文を取り消しました。資産は最初から動いていません。"}; save(); return render(); }
+}
+document.addEventListener("click", e => {
+  const h = e.target.closest && e.target.closest("[data-help]");
+  if (h) { const [t, b] = HELP[h.dataset.help]; $("#pop").innerHTML = `<div class="overlay" data-hclose><div class="sheet" role="dialog" aria-modal="true"><h2>${esc(t)}</h2><p style="margin:0">${esc(b)}</p><div class="row" style="justify-content:flex-end"><button type="button" class="primary" data-hx>閉じる</button></div></div></div>`; return; }
+  if (e.target.closest && e.target.closest("[data-hx]") || (e.target.hasAttribute && e.target.hasAttribute("data-hclose"))) { $("#pop").innerHTML = pop || ""; bind(); }
+  if (e.target.hasAttribute && e.target.hasAttribute("data-close")) { pop = null; bind(); }
+});
+$("#reset").onclick = () => { S = fresh(); flash = null; pop = null; save(); render(); };
+
+setInterval(() => {
+  if (!S.acct) return;
+  const left = S.next - now();
+  if (left <= 0) return clearNow();
+  const tm = $("#tm"), tb = $("#tb"); if (tm) tm.textContent = left + "秒"; if (tb) tb.style.width = (1 - left / BATCH) * 100 + "%";
+}, 1000);
+render();
+</script>
+</body>
+</html>
