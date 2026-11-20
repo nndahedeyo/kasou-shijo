@@ -79,3 +79,12 @@ test("ある時刻に、そのかぎがどのアカウントのものだった�
   const S = reduce([open(P("a"), "nnda", 1), ev(P("a"), 10, {t: "rotate", to: P("d")})], 20);
   assert.equal(ownerAt(S, P("a"), 5), P("a")); assert.equal(ownerAt(S, P("a"), 15), null); assert.equal(ownerAt(S, P("d"), 15), P("a")); assert.equal(ownerAt(S, P("d"), 5), null);
 });
+test("resolver：使っている間のかぎはアカウントの番号に、使われなくなったかぎは「だれでもない」に、アカウントより前は元のまま", () => {
+  const {resolver} = require("../core/account.js");
+  const S = reduce([open(P("a"), "nnda", 5), ev(P("a"), 6, {t: "rotate", to: P("d")})], 10), who = resolver(S);
+  assert.equal(who(P("a"), 3), null);            // アカウントを開く前（相互レビューの前からの記録はそのまま）
+  assert.equal(who(P("a"), 5), P("a"));
+  assert.equal(who(P("d"), 7), P("a"));          // 新しいかぎも同じ人
+  assert.equal(who(P("a"), 7), "retired:" + P("a"));   // 古いかぎで出したものは数えない
+  assert.equal(who(P("f"), 7), null);
+});

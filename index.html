@@ -450,8 +450,17 @@ else globalThis.Auction = {clear, validate, meetsLimit};
       if (A.keys[i].key === pk && t >= A.keys[i].at && (i + 1 >= A.keys.length || t < A.keys[i + 1].at)) return A.id;
     return null;
   }
+  // 何度も引くとき用（相互レビューの出来事を1つずつ数えるとき）。使われなくなったかぎで出したものは、だれのものにもしない
+  // （持ち替え・取り戻しのあとに、古いかぎや盗まれたかぎで出したものが、アカウントの分として数えられないように）
+  function resolver(S) {
+    const idx = {};
+    for (const A of Object.values(S.accounts)) A.keys.forEach((k, i) => (idx[k.key] = idx[k.key] || []).push({id: A.id, from: k.at, to: i + 1 < A.keys.length ? A.keys[i + 1].at : Infinity}));
+    return (pk, t) => { const xs = idx[pk]; if (!xs) return null;
+      for (const x of xs) if (t >= x.from && t < x.to) return x.id;
+      return t >= xs[0].from ? "retired:" + pk : null; };
+  }
   const byHandle = (S, h) => S.byHandle[String(h || "").replace(/^@/, "").toLowerCase()] ? S.accounts[S.byHandle[String(h).replace(/^@/, "").toLowerCase()]] : null;
-  const api = {reduce, byHandle, ownerAt, R, KIND, TAG, HANDLE, DAY};
+  const api = {reduce, byHandle, ownerAt, resolver, R, KIND, TAG, HANDLE, DAY};
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.Account = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);
 
