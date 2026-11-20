@@ -3,7 +3,7 @@ from pathlib import Path
 R = Path(__file__).resolve().parent.parent
 app = (R / "app.html").read_text(encoding="utf-8")
 eng = (R / "core/auction.js").read_text(encoding="utf-8")
-body = app.replace("/*__AUCTION__*/", eng)
+body = app.replace("/*__AUCTION__*/", eng).replace("/*__SIG__*/", (R / "core/sig.js").read_text(encoding="utf-8")).replace("/*__KECCAK__*/", (R / "core/keccak.js").read_text(encoding="utf-8")).replace("/*__ACCOUNT__*/", (R / "core/account.js").read_text(encoding="utf-8"))
 head, rest = body.split("<style>", 1)
 style, main = rest.split("</style>", 1)
 (R / "index.html").write_text('<!doctype html>\n<html lang="ja">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n'

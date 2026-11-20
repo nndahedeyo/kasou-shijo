@@ -63,11 +63,25 @@ details.adv[open] summary{margin-bottom:6px}
 .flow .out b{color:var(--sell)}.flow .in b{color:var(--buy)}
 .how h3{font-size:15px;margin:0 0 4px}
 .how p{margin:0;font-size:14px;color:var(--mute)}
+.idcard .who{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;position:relative;z-index:1}
+.idcard .hd{font-size:13px;opacity:.8;margin-top:2px}
+.idcard .line{font-size:14px;opacity:.9;position:relative;z-index:1}
+.idcard .num{font-size:11px;opacity:.7;font-family:ui-monospace,Menlo,monospace;letter-spacing:.04em;position:relative;z-index:1}
+.idcard .links{display:flex;flex-wrap:wrap;gap:6px;position:relative;z-index:1}.idcard .links a{color:#fff;font-size:12px;opacity:.85}
+button.idbtn{all:unset;display:block;width:100%;cursor:pointer;border-radius:20px}
+button.idbtn:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+.grid2{display:grid;gap:10px}
+.gl{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 2px;border-top:1px solid var(--line);font-size:14px}
+.gl:first-child{border-top:0}
+.pill{font-size:11px;padding:2px 9px;border-radius:999px;background:var(--sunk);color:var(--mute);white-space:nowrap}
+.pill.ok{background:var(--acc2);color:var(--acc);font-weight:700}
+.code{font-family:ui-monospace,Menlo,monospace;font-size:22px;letter-spacing:.2em;font-weight:700}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--mute)}.status i{width:8px;height:8px;border-radius:50%;background:var(--mute)}.status.on i{background:var(--acc)}
 @media (prefers-reduced-motion:reduce){.wait i,.idcard.glow{animation:none}.panel{transition:none}}
 </style>
 
 <div class="wrap">
-  <header><h1>仮想市場</h1><button type="button" class="link" data-act="how">しくみ</button></header>
+  <header><h1>仮想市場</h1><div style="display:flex;gap:14px;align-items:center"><span class="status" id="net" title="つないでいます"><i></i></span><button type="button" class="link" data-act="how">しくみ</button></div></header>
   <main id="main"></main>
   <p class="foot">見本の台帳で動く試作です。本物の資産や英単語は入力しないでください。<button type="button" id="reset" class="link">やり直す</button></p>
 </div>
@@ -75,6 +89,15 @@ details.adv[open] summary{margin-bottom:6px}
 
 <script>
 /*__AUCTION__*/
+</script>
+<script>
+/*__SIG__*/
+</script>
+<script>
+/*__KECCAK__*/
+</script>
+<script>
+/*__ACCOUNT__*/
 </script>
 <script>
 "use strict";
@@ -101,24 +124,109 @@ function save(){ try { localStorage.setItem(KEY, JSON.stringify(S, (k, v) => typ
 
 let side = "buy", note = null, pending = null;
 
-/* ---------- アカウント ---------- */
-async function openAccount(name){
-  name = name.trim().toLowerCase();
-  if (!/^[a-z0-9][a-z0-9-]{1,19}$/.test(name)) { note = {k: "warn", m: "名前は、英小文字・数字・ハイフンで2〜20文字にしてください。"}; return render(); }
-  let how = "この端末";
+/* ---------- アカウント（がまぐち・jeni のプロフィールカードにあたる部分） ----------
+   かぎはパスキー（顔認証・指紋）から毎回作り直す。パスキーが同期される端末なら、どの端末でも同じアカウントで開ける。
+   パスキーが使えない端末では、この端末の中にかぎを置く（そのときは信頼できる人を決めておくのが大事）。 */
+const AC = globalThis.Account, enc = new TextEncoder();
+const MEKEY = "kasou.me", EVKEY = "kasou.acct.events";
+let me = (() => { try { return JSON.parse(localStorage.getItem(MEKEY) || "null"); } catch (e) { return null; } })();   // {sk, pk, how}
+const saveMe = () => { try { localStorage.setItem(MEKEY, JSON.stringify(me)); } catch (e) {} };
+let aev = (() => { try { return JSON.parse(localStorage.getItem(EVKEY) || "[]"); } catch (e) { return []; } })();
+let AS = AC.reduce(aev, now());
+const recount = () => { AS = AC.reduce(aev, now()); };
+const myAcct = () => me && AS.accounts[AS.byKey[me.pk]] || null;
+const hexs = b => Array.from(new Uint8Array(b), x => x.toString(16).padStart(2, "0")).join("");
+const addrOf = sk => { const h = hexs(Keccak.keccak256(Sig.pubXY(sk))).slice(24); const k = hexs(Keccak.keccak256(enc.encode(h)));
+  return "0x" + [...h].map((c, i) => parseInt(k[i], 16) >= 8 ? c.toUpperCase() : c).join(""); };   // 大文字小文字で書き間違いを見つける形（EIP-55）
+const shortNo = pk => pk.slice(0, 4) + "·" + pk.slice(4, 8) + "·" + pk.slice(-4);
+const codeOf = pk => pk.slice(0, 4).toUpperCase();   // 取り戻しの合言葉（新しいかぎの頭4文字）
+
+const SALT = enc.encode("kasou-account-v1");
+const rand = n => crypto.getRandomValues(new Uint8Array(n));
+async function keyFromPrf(first) { return Sig.toKey(await Sig.sha(new Uint8Array([...enc.encode("kasou/account/key"), ...new Uint8Array(first)]))); }
+async function passkeyNew(handle) {
+  if (!window.PublicKeyCredential || !navigator.credentials) return null;
   try {
-    if (window.PublicKeyCredential && navigator.credentials && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()) {
-      await navigator.credentials.create({publicKey: {
-        challenge: crypto.getRandomValues(new Uint8Array(32)), rp: {name: "仮想市場 試験所"},
-        user: {id: crypto.getRandomValues(new Uint8Array(16)), name, displayName: name},
-        pubKeyCredParams: [{type: "public-key", alg: -7}], authenticatorSelection: {userVerification: "required", residentKey: "preferred"}, timeout: 60000}});
-      how = "パスキー";
-    }
-  } catch (e) { how = "この端末"; }
-  S.acct = {name, how, at: Date.now()};
-  S.bal = {tETH: 2n * U, tUSD: 6000n * U};   // 試験用の配布
-  note = {k: "ok", m: "アカウントができました。試験用の 2 ETH と 6,000 ドルが入っています。"};
-  save(); render();
+    const c = await navigator.credentials.create({publicKey: {challenge: rand(32), rp: {name: "nndahedeyo"}, user: {id: rand(16), name: "@" + handle, displayName: "@" + handle},
+      pubKeyCredParams: [{type: "public-key", alg: -7}, {type: "public-key", alg: -257}], authenticatorSelection: {residentKey: "required", userVerification: "required"},
+      timeout: 60000, extensions: {prf: {eval: {first: SALT}}}}});
+    const x = c.getClientExtensionResults().prf;
+    if (x && x.results && x.results.first) return keyFromPrf(x.results.first);
+    if (x && x.enabled) return passkeyOpen([{type: "public-key", id: c.rawId}]);
+  } catch (e) {}
+  return null;
+}
+async function passkeyOpen(allow) {
+  if (!window.PublicKeyCredential || !navigator.credentials) return null;
+  try {
+    const g = await navigator.credentials.get({publicKey: {challenge: rand(32), userVerification: "required", timeout: 60000, ...(allow ? {allowCredentials: allow} : {}), extensions: {prf: {eval: {first: SALT}}}}});
+    const x = g.getClientExtensionResults().prf;
+    if (x && x.results && x.results.first) return keyFromPrf(x.results.first);
+  } catch (e) {}
+  return null;
+}
+async function newKey(handle) {
+  const k = await passkeyNew(handle);
+  return k ? {sk: k, how: "パスキー"} : {sk: Sig.newKey(), how: "この端末"};
+}
+const setMe = (sk, how) => { me = {sk, pk: Sig.hex(Sig.pubkey(Sig.unhex(sk))), how}; saveMe(); };
+
+// 出来事を出す・受け取る（Nostr の中継。相互レビューと同じしくみ）
+const RELAYS = ["wss://relay.damus.io", "wss://nos.lol", "wss://relay.primal.net", "wss://relay.nostr.band"];
+const socks = []; let outbox = (() => { try { return JSON.parse(localStorage.getItem("kasou.outbox") || "[]"); } catch (e) { return []; } })();
+const saveEv = () => { try { localStorage.setItem(EVKEY, JSON.stringify(aev.slice(-4000))); localStorage.setItem("kasou.outbox", JSON.stringify(outbox)); } catch (e) {} };
+function addEv(e) { if (aev.some(x => x.id === e.id)) return false; aev.push(e); saveEv(); return true; }
+let tAcc;
+async function accept(e) {
+  if (!e || e.kind !== AC.KIND || !(e.tags || []).some(t => t[0] === "t" && t[1] === AC.TAG)) return;
+  if (!(await Sig.verifyEvent(e))) return;
+  if (addEv(e)) { clearTimeout(tAcc); tAcc = setTimeout(() => { recount(); onAccount(); }, 150); }
+}
+const openSocks = () => socks.filter(s => s.readyState === 1);
+function flush() { const os = openSocks(); if (!os.length) return; for (const e of outbox) for (const s of os) s.send(JSON.stringify(["EVENT", e])); outbox = []; saveEv(); }
+function connectOne(url, wait) {
+  let ws; try { ws = new WebSocket(url); } catch (e) { return; }
+  ws.onopen = () => { wait = 2000; ws.send(JSON.stringify(["REQ", "ac", {kinds: [AC.KIND], "#t": [AC.TAG], limit: 2000}])); flush(); netStatus(); };
+  ws.onmessage = m => { try { const d = JSON.parse(m.data); if (d[0] === "EVENT") accept(d[2]); } catch (e) {} };
+  ws.onclose = () => { const i = socks.indexOf(ws); if (i >= 0) socks.splice(i, 1); netStatus(); setTimeout(() => connectOne(url, Math.min((wait || 2000) * 2, 60000)), wait || 2000); };
+  ws.onerror = () => {};
+  socks.push(ws);
+}
+function netStatus() { const n = $("#net"); if (!n) return; const on = openSocks().length > 0; n.className = "status" + (on ? " on" : ""); n.title = on ? "つながっています" : "つないでいます"; }
+async function emitA(c, sk) {
+  sk = sk || me.sk; const pk = Sig.hex(Sig.pubkey(Sig.unhex(sk)));
+  const last = aev.filter(e => e.pubkey === pk).reduce((m, e) => Math.max(m, e.created_at), 0);
+  const newest = aev.reduce((m, e) => e.created_at <= now() + 5 ? Math.max(m, e.created_at) : m, 0);
+  const e = await Sig.signEvent({kind: AC.KIND, tags: [["t", AC.TAG]], content: JSON.stringify(c), created_at: Math.max(now(), last + 1, newest + 1)}, sk);
+  addEv(e); outbox.push(e); saveEv(); flush(); recount(); return e;
+}
+const okEv = e => { const l = AS.log.find(x => x.id === e.id); return !!(l && l.ok); };
+
+// 市場の台帳（見本）とアカウントを結ぶ
+function attachMarket() {
+  const A = myAcct(); if (!A) return;
+  if (!S.acct || S.acct.id !== A.id) { S = fresh(); S.acct = {id: A.id, name: A.handle, how: me.how, at: Date.now()}; S.bal = {tETH: 2n * U, tUSD: 6000n * U}; save(); }   // 試験用の配布
+  S.acct.name = A.handle; S.acct.how = me.how;
+}
+function onAccount() { attachMarket(); if (!$("#panel").classList.contains("on")) render(); else refreshAcctPanel(); }
+
+async function openAccount(handle){
+  handle = (handle || "").trim().toLowerCase().replace(/^@/, "");
+  if (!AC.HANDLE.test(handle)) { note = {k: "warn", m: "名前は、英小文字・数字・ハイフンで2〜20文字にしてください。"}; return render(); }
+  if (AS.byHandle[handle]) { note = {k: "warn", m: `@${handle} はもう使われています。前に作った本人なら「前のアカウントで開く」から。`}; return render(); }
+  const k = await newKey(handle); setMe(k.sk, k.how);
+  const e = await emitA({t: "open", handle, display: handle});
+  if (!okEv(e)) { note = {k: "warn", m: "開けませんでした。名前を変えてもう一度。"}; me = null; saveMe(); return render(); }
+  attachMarket();
+  note = {k: "ok", m: k.how === "パスキー" ? "アカウントができました。試験用の 2 ETH と 6,000 ドルが入っています。" : "アカウントができました。この端末ではパスキーが使えないので、かぎはこの端末の中だけにあります。カードを押して、信頼できる人を決めておいてください。"};
+  render();
+}
+async function reopen() {
+  const sk = await passkeyOpen();
+  if (!sk) { note = {k: "warn", m: "パスキーで開けませんでした。かぎをなくしたときは「取り戻す」から。"}; return render(); }
+  setMe(sk, "パスキー");
+  if (!myAcct()) { note = {k: "warn", m: "このパスキーのアカウントが、まだ見つかりません。つながるまで少し待つか、取り戻しを頼んでください。"}; return render(); }
+  attachMarket(); note = {k: "ok", m: "おかえりなさい。"}; render();
 }
 
 /* ---------- 注文 ---------- */
@@ -205,16 +313,34 @@ function ordersHtml(){
     + (done.length ? `<div class="mine">${done.map(o => `<div><span class="${o.side === "buy" ? "b" : "s"}">${o.side === "buy" ? "買い" : "売り"}</span><span class="mono">${fmt(o.last.receive, dp(o.buy))} ${o.buy === "tUSD" ? "ドル" : "ETH"} 受け取り</span><span class="mono small">${o.last.price.toFixed(2)}</span></div>`).join("")}</div>` : "");
 }
 
+// プロフィールカード（jeni のカードと同じ 1.586:1）。押すとアカウントの画面
+function idCard(A, inner) {
+  return `<button type="button" class="idbtn" data-act="acct" aria-label="アカウントを開く"><div class="idcard" id="idc"><div class="who"><div><div class="nm">${esc(A.display || A.handle)}</div><div class="hd">@${esc(A.handle)}</div></div><div class="tag">${esc(me.how)}</div></div>${inner}</div></button>`;
+}
 function render(){
   const m = $("#main");
-  if (!S.acct) {
+  const A = myAcct();
+  if (!me) {
     m.innerHTML = `<div class="idcard" style="opacity:.92"><div><div class="tag">あなたのアカウント</div><div class="nm">&nbsp;</div></div><div class="tag">顔認証か指紋で開きます。英単語の控えはいりません。</div></div>
       <div class="card" style="margin-top:18px">${noteHtml()}<label>名前<input id="nm" placeholder="nnda" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="20"></label>
-        <div style="margin-top:12px"><button type="button" class="primary" data-act="open">開く</button></div></div>`;
+        <div style="margin-top:12px"><button type="button" class="primary" data-act="open">開く</button></div>
+        <div style="display:flex;justify-content:space-between;margin-top:10px"><button type="button" class="link" data-act="reopen">前のアカウントで開く</button><button type="button" class="link" data-act="lost">かぎをなくした</button></div></div>`;
     return;
   }
-  m.innerHTML = `<div class="idcard" id="idc"><div><div class="tag">${esc(S.acct.how)}</div><div class="nm">${esc(S.acct.name)}</div></div>
-      <div class="bal"><div><small>ETH</small><b id="b-eth">${fmt(S.bal.tETH)}</b></div><div><small>ドル</small><b id="b-usd">${fmt(S.bal.tUSD, 2)}</b></div></div></div>
+  if (!A) {
+    const rq = me.recovering && AS.accounts[me.recovering], r = rq && rq.recovery[me.pk];
+    m.innerHTML = rq ? `<div class="card grid2">${noteHtml()}<h2>@${esc(rq.handle)} を取り戻しています</h2>
+        <p class="small" style="margin:0">信頼できる人に、次の合言葉を伝えて承認を頼んでください。承認がそろってから3日で、この端末で使えるようになります。</p>
+        <div class="code">${codeOf(me.pk)}</div>
+        <p class="small" style="margin:0">${r ? (r.since ? `承認がそろいました。${Math.max(0, Math.ceil((r.since + AC.R.wait - now()) / 86400))}日後に使えます。` : `承認 ${r.ok.length} / ${rq.guard.need}`) : "頼みを送っています…"}</p>
+        <button type="button" class="link" data-act="forget">やめる</button></div>`
+      : `<div class="card grid2">${noteHtml()}<p style="margin:0">アカウントを探しています…</p><p class="small" style="margin:0">つながると出てきます。見つからないときは、取り戻しを頼んでください。</p><button type="button" class="link" data-act="forget">はじめの画面に戻る</button></div>`;
+    return;
+  }
+  attachMarket();
+  const alert = Object.keys(A.recovery).length ? `<div class="note warn"><span>あなたのアカウントを取り戻す頼みが出ています。心当たりがなければ、カードを押して取り消してください。</span></div>` : "";
+  const asks = guardAsks().length ? `<div class="note ok"><span>取り戻しの承認を頼まれています。カードを押して確かめてください。</span></div>` : "";
+  m.innerHTML = `${alert}${asks}${idCard(A, `<div class="bal"><div><small>ETH</small><b id="b-eth">${fmt(S.bal.tETH)}</b></div><div><small>ドル</small><b id="b-usd">${fmt(S.bal.tUSD, 2)}</b></div></div>`)}
     <div class="price"><b class="mono" id="px-now">${S.ref.toFixed(2)}</b><span>ドル ／ 1 ETH</span></div>
     <div id="spark">${spark()}</div>
     <div id="note">${noteHtml()}</div>
@@ -247,7 +373,10 @@ const HOW = [
   ["条件だけに署名する", "署名するのは「これを最大これだけ渡して、これ以上を、この時刻までに受け取る」という条件だけです。トークンを使う許可（承認）や、操作の委任は含まれません。条件より不利な約定は作れないので、誰が約定の計算をしても資産は盗めません。"],
   ["全員同じ値段でまとめて約定", "注文を一つずつ順番に処理せず、少しの間集めてから、全員を同じ値段で約定させます。順番が関係ないので、注文を見て先回りする売買で不利になりません。値段は、約定する量が一番多くなるところに決まります。"],
   ["何も指定しなければ1%まで", "値段を決めずに注文すると、いまの値段から1%までのずれを許す条件になります。それより不利になる相手しかいなければ、約定せずに消えます。値段は「値段を自分で決める」から指定できます。"],
-  ["顔認証で開くアカウント", "顔認証や指紋でアカウントを作ります。鍵は端末の安全な場所に保管され、英単語12個の控えはいりません。試作のこの段階では、顔認証は本人確認の体験だけに使っています。チェーンにつなぐ段階で、本当の鍵になります。"],
+  ["顔認証で開くアカウント", "顔認証や指紋（パスキー）からかぎを作ります。英単語12個の控えはいりません。パスキーが同期される端末なら、どれでも同じアカウントで開けます。同じかぎから、試験チェーン（Base Sepolia）のアドレスも作られます。"],
+  ["名前で探せる", "@なまえ は早い者勝ちで、1つのアカウントに1つです。長い番号の代わりに、名前で相手を探せます。"],
+  ["信頼できる人で取り戻す", "かぎをなくしても、決めておいた信頼できる人の承認で、新しい端末に取り戻せます。承認がそろってから3日待って切り替わり、そのあいだは今のかぎを持つ本人が取り消せます。信頼した人が勝手に乗っ取ることはできません。"],
+  ["ひとつのアカウントで", "このアカウントは、相互レビューや jeni にもつなげられるように作っています。場所ごとの価値（券など）は混ざりません。"],
 ];
 function openPanel(html){
   $("#pbody").innerHTML = html; const p = $("#panel");
@@ -265,6 +394,50 @@ function reviewHtml(d){
       <p class="small" style="margin:4px 2px 0">この署名には、トークンを使う許可（承認）も、操作の委任も含まれていません。これより不利な約定は作れません。</p>
     </div>
     <button type="button" class="primary" data-act="sign">${S.acct.how === "パスキー" ? "顔認証で署名" : "署名する"}</button>`;
+}
+/* ---------- アカウントの画面 ---------- */
+// 自分が信頼できる人になっているアカウントで、承認を待っている取り戻し
+function guardAsks() {
+  const A = myAcct(); if (!A) return [];
+  const out = [];
+  for (const X of Object.values(AS.accounts)) if (X.guard.list.includes(A.id)) for (const [to, r] of Object.entries(X.recovery)) if (!r.ok.includes(A.id)) out.push({X, to, r});
+  return out;
+}
+let gDraft = null;
+function acctHtml() {
+  const A = myAcct(); if (!A) return "<p class=small>アカウントがまだ見つかりません。</p>";
+  if (!gDraft) gDraft = {list: A.guard.list.slice(), need: A.guard.need || Math.min(2, A.guard.list.length) || 1};
+  const H = id => AS.accounts[id] ? "@" + AS.accounts[id].handle : shortNo(id);
+  const mine = Object.entries(A.recovery), asks = guardAsks();
+  return `<h2>アカウント</h2>
+    <div class="idcard"><div class="who"><div><div class="nm">${esc(A.display || A.handle)}</div><div class="hd">@${esc(A.handle)}</div></div><div class="tag">${esc(me.how)}</div></div>
+      ${A.line ? `<div class="line">${esc(A.line)}</div>` : ""}
+      <div><div class="links">${A.links.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https:\/\//, "").slice(0, 30))}</a>`).join("")}</div><div class="num">No. ${shortNo(A.id)}</div></div></div>
+    ${mine.length ? `<div class="card grid2" style="border:2px solid var(--warn)"><b>あなたのアカウントを取り戻す頼みが出ています</b>${mine.map(([to, r]) => `<div class="gl"><span>合言葉 <b>${codeOf(to)}</b>・承認 ${r.ok.length}/${A.guard.need}${r.since ? "（3日後に切り替わります）" : ""}</span><button type="button" data-act="cancel-rec" data-id="${to}">取り消す</button></div>`).join("")}<span class="small">心当たりがなければ取り消してください。あなたが頼んだものなら、そのままで大丈夫です。</span></div>` : ""}
+    ${asks.length ? `<div class="card grid2"><b>取り戻しの承認を頼まれています</b>${asks.map(q => `<div class="gl"><span>@${esc(q.X.handle)}・合言葉 <b>${codeOf(q.to)}</b></span><button type="button" data-act="approve" data-id="${q.X.id}" data-to="${q.to}">承認</button></div>`).join("")}<span class="small">承認する前に、本人に電話や会って合言葉を確かめてください。合言葉が違うときは、承認しないでください。</span></div>` : ""}
+    <div class="card grid2"><b>プロフィール</b>
+      <label>表示名<input id="pf-d" maxlength="24" value="${esc(A.display)}"></label>
+      <label>ひとこと<input id="pf-l" maxlength="80" value="${esc(A.line)}" placeholder="個人開発をしています"></label>
+      <label>リンク<input id="pf-u" inputmode="url" value="${esc(A.links[0] || "")}" placeholder="https://"></label>
+      <button type="button" data-act="save-card">保存</button></div>
+    <div class="card grid2"><b>信頼できる人</b><span class="small">かぎをなくしたとき、この人たちの承認で新しい端末に取り戻せます。3人を決めて、2人の承認にしておくのがおすすめです。</span>
+      <div>${gDraft.list.length ? gDraft.list.map(id => `<div class="gl"><span>${esc(H(id))}</span><button type="button" class="link" data-act="g-del" data-id="${id}">外す</button></div>`).join("") : `<p class="small" style="margin:0">まだいません</p>`}</div>
+      ${gDraft.list.length < AC.R.maxGuardians ? `<div style="display:flex;gap:8px"><input id="g-add" placeholder="@なまえ" autocapitalize="none" spellcheck="false"><button type="button" data-act="g-add">足す</button></div>` : ""}
+      ${gDraft.list.length ? `<label>何人の承認で取り戻せるか<input id="g-need" type="number" min="1" max="${gDraft.list.length}" value="${Math.min(gDraft.need, gDraft.list.length)}"></label>` : ""}
+      <p class="small" id="g-msg" style="margin:0;color:var(--warn)" role="alert"></p>
+      <button type="button" data-act="g-save">決める</button></div>
+    <div class="card grid2"><b>この端末</b>
+      <span class="small">${me.how === "パスキー" ? "かぎはパスキー（顔認証・指紋）から作られます。同じパスキーが入った端末なら、どれでも開けます。" : "この端末ではパスキーが使えないため、かぎはこの端末の中だけにあります。信頼できる人を決めておいてください。"}</span>
+      <div class="gl"><span>番号</span><span class="small mono" style="word-break:break-all;text-align:right">${A.id}</span></div>
+      <div class="gl"><span>試験チェーン（Base Sepolia）のアドレス</span><span class="small mono" style="word-break:break-all;text-align:right">${addrOf(me.sk)}</span></div>
+      <button type="button" class="link" data-act="forget">この端末から閉じる</button></div>`;
+}
+function refreshAcctPanel() { if ($("#pbody .idcard") && !document.activeElement.matches("#pbody input")) { $("#pbody").innerHTML = acctHtml(); } }
+function lostHtml() {
+  return `<h2>かぎをなくした</h2><p class="small" style="margin:0">新しいかぎをこの端末で作り、信頼できる人の承認で、前のアカウントを取り戻します。承認がそろってから3日で使えるようになります。</p>
+    <label>前のアカウントの名前<input id="lost-h" placeholder="@なまえ" autocapitalize="none" spellcheck="false"></label>
+    <p class="small" id="lost-msg" style="margin:0;color:var(--warn)" role="alert"></p>
+    <button type="button" class="primary" data-act="lost-go">取り戻しを頼む</button>`;
 }
 const howHtml = () => `<h2>しくみ</h2><div class="sheet how" style="display:grid;gap:18px">${HOW.map(([t, b]) => `<div><h3>${t}</h3><p>${b}</p></div>`).join("")}</div>`;
 
@@ -284,8 +457,34 @@ const howHtml = () => `<h2>しくみ</h2><div class="sheet how" style="display:g
   });
 })();
 
-async function act(a){
+async function act(a, t){
+  const id = t && t.dataset.id;
   if (a === "open") return openAccount($("#nm").value);
+  if (a === "reopen") return reopen();
+  if (a === "lost") return openPanel(lostHtml());
+  if (a === "lost-go") {
+    const X = AC.byHandle(AS, $("#lost-h").value);
+    if (!X) { $("#lost-msg").textContent = "その名前のアカウントが見つかりません。"; return; }
+    if (!X.guard.list.length) { $("#lost-msg").textContent = "このアカウントには信頼できる人が決められていないので、取り戻せません。"; return; }
+    const k = await newKey(X.handle); setMe(k.sk, k.how); me.recovering = X.id; saveMe();
+    await emitA({t: "ask", account: X.id}); closePanel(); return render();
+  }
+  if (a === "forget") { me = null; saveMe(); S = fresh(); save(); note = null; closePanel(); return render(); }
+  if (a === "acct") { gDraft = null; return openPanel(acctHtml()); }
+  if (a === "save-card") { await emitA({t: "card", display: $("#pf-d").value.trim(), line: $("#pf-l").value.trim(), links: $("#pf-u").value.trim() ? [$("#pf-u").value.trim()] : []}); $("#pbody").innerHTML = acctHtml(); render(); return; }
+  if (a === "g-add") {
+    const X = AC.byHandle(AS, $("#g-add").value), A = myAcct();
+    if (!X || X.id === A.id) { $("#g-msg").textContent = "その名前のアカウントが見つかりません（自分は入れられません）。"; return; }
+    if (!gDraft.list.includes(X.id)) gDraft.list.push(X.id); $("#pbody").innerHTML = acctHtml(); return;
+  }
+  if (a === "g-del") { gDraft.list = gDraft.list.filter(x => x !== id); $("#pbody").innerHTML = acctHtml(); return; }
+  if (a === "g-save") {
+    const need = gDraft.list.length ? Math.max(1, Math.min(gDraft.list.length, parseInt($("#g-need").value) || 1)) : 0;
+    const e = await emitA({t: "guard", list: gDraft.list, need}); gDraft = null; $("#pbody").innerHTML = acctHtml(); render();
+    $("#g-msg").textContent = okEv(e) ? "" : "決められませんでした。"; if (okEv(e)) { note = {k: "ok", m: "信頼できる人を決めました。"}; } return;
+  }
+  if (a === "approve") { await emitA({t: "approve", account: id, to: t.dataset.to}); $("#pbody").innerHTML = acctHtml(); render(); return; }
+  if (a === "cancel-rec") { await emitA({t: "cancel", to: id}); $("#pbody").innerHTML = acctHtml(); render(); return; }
   if (a === "how") return openPanel(howHtml());
   if (a === "back") return closePanel();
   if (a === "dismiss") { note = null; $("#note") ? ($("#note").innerHTML = "") : render(); return; }
@@ -301,10 +500,14 @@ document.addEventListener("click", e => {
   const t = e.target.closest && e.target.closest("[data-act],[data-side]");
   if (!t) return;
   if (t.dataset.side) { side = t.dataset.side; S.lastQty = $("#qty") ? $("#qty").value : S.lastQty; return render(); }
-  act(t.dataset.act);
+  act(t.dataset.act, t);
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#panel").classList.contains("on")) closePanel(); });
-$("#reset").onclick = () => { S = fresh(); note = null; closePanel(); save(); render(); };
-setInterval(() => { if (S.acct && S.next - now() <= 0) clearNow(); }, 1000);
+$("#reset").onclick = () => { const id = S.acct && S.acct.id; S = fresh(); note = null; closePanel(); save(); attachMarket(); render(); };
+setInterval(() => { if (S.acct && myAcct() && S.next - now() <= 0) clearNow(); }, 1000);
+setInterval(() => { const before = myAcct(); recount(); if (!before && myAcct()) onAccount(); flush(); netStatus(); }, 15000);   // 取り戻しの3日などを数え直す
+if (me && !myAcct() && S.acct && !S.acct.id) { S = fresh(); save(); }   // 前の試作の台帳は使わない
 render();
+if ("WebSocket" in window) for (const u of RELAYS) connectOne(u, 2000);
+window.__acct = {tick: () => { recount(); onAccount(); render(); }, get AS() { return AS; }, get me() { return me; }};
 </script>

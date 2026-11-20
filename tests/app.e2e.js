@@ -6,6 +6,7 @@ const W = parseInt(process.argv[2] || '400');
   const b = await chromium.launch(); const errs = []; const log = [];
   const p = await (await b.newContext({viewport: {width: W, height: 860}})).newPage();
   p.on('pageerror', e => errs.push(e.message));
+  await p.routeWebSocket(/^wss:\/\//, ws => { ws.onMessage(() => {}); });   // 本物の中継には何も出さない（テストの名前を本番で取らない）
   await p.goto('file://' + path.resolve(__dirname, '..', 'index.html'));
   const check = (l, c) => { if (!c) process.exitCode = 1; log.push((c ? 'OK  ' : 'NG  ') + l); };
   const bal = async () => p.evaluate(() => JSON.parse(localStorage.getItem('kasou-shijo.v1')).bal);
