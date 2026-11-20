@@ -337,6 +337,11 @@ function render(){
       : `<div class="card grid2">${noteHtml()}<p style="margin:0">アカウントを探しています…</p><p class="small" style="margin:0">つながると出てきます。見つからないときは、取り戻しを頼んでください。</p><button type="button" class="link" data-act="forget">はじめの画面に戻る</button></div>`;
     return;
   }
+  if (!A.handle) {   // 相互レビューなど、名前なしで始めたアカウント：市場では @名前 を決めてもらう
+    m.innerHTML = `${idCard(A, "")}<div class="card grid2" style="margin-top:18px">${noteHtml()}<b>@名前を決めてください</b><span class="small">市場では、名前で相手を探します。英小文字・数字・ハイフンで2〜20文字。あとから変えられません。</span>
+      <input id="nm" placeholder="nnda" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="20"><button type="button" class="primary" data-act="name">決める</button></div>`;
+    return;
+  }
   attachMarket();
   const alert = Object.keys(A.recovery).length ? `<div class="note warn"><span>あなたのアカウントを取り戻す頼みが出ています。心当たりがなければ、カードを押して取り消してください。</span></div>` : "";
   const asks = guardAsks().length ? `<div class="note ok"><span>取り戻しの承認を頼まれています。カードを押して確かめてください。</span></div>` : "";
@@ -375,7 +380,8 @@ const HOW = [
   ["何も指定しなければ1%まで", "値段を決めずに注文すると、いまの値段から1%までのずれを許す条件になります。それより不利になる相手しかいなければ、約定せずに消えます。値段は「値段を自分で決める」から指定できます。"],
   ["顔認証で開くアカウント", "顔認証や指紋（パスキー）からかぎを作ります。英単語12個の控えはいりません。パスキーが同期される端末なら、どれでも同じアカウントで開けます。同じかぎから、試験チェーン（Base Sepolia）のアドレスも作られます。"],
   ["名前で探せる", "@なまえ は早い者勝ちで、1つのアカウントに1つです。長い番号の代わりに、名前で相手を探せます。"],
-  ["信頼できる人で取り戻す", "かぎをなくしても、決めておいた信頼できる人の承認で、新しい端末に取り戻せます。承認がそろってから3日待って切り替わり、そのあいだは今のかぎを持つ本人が取り消せます。信頼した人が勝手に乗っ取ることはできません。"],
+  ["信頼できる人で取り戻す", "かぎをなくしても、決めておいた信頼できる人の承認で、新しい端末に取り戻せます。承認がそろってから3日待って切り替わり、そのあいだは今のかぎを持つ本人が取り消せます。信頼した人の一部が組んでも、乗っ取ることはできません。"],
+  ["かぎを盗まれたとき", "盗んだ人は、信頼できる人をすぐには替えられません（替えは3日後に効きます）。そのあいだに本人が取り戻しを頼み、信頼できる人（2人以上）が全員承認すると、盗んだ人のかぎでは取り消せません。"],
   ["ひとつのアカウントで", "このアカウントは、相互レビューや jeni にもつなげられるように作っています。場所ごとの価値（券など）は混ざりません。"],
 ];
 function openPanel(html){
@@ -406,7 +412,7 @@ function guardAsks() {
 let gDraft = null;
 function acctHtml() {
   const A = myAcct(); if (!A) return "<p class=small>アカウントがまだ見つかりません。</p>";
-  if (!gDraft) gDraft = {list: A.guard.list.slice(), need: A.guard.need || Math.min(2, A.guard.list.length) || 1};
+  if (!gDraft) { const g = A.pendingGuard || A.guard; gDraft = {list: g.list.slice(), need: g.need || Math.min(2, g.list.length) || 1}; }
   const H = id => AS.accounts[id] ? "@" + AS.accounts[id].handle : shortNo(id);
   const mine = Object.entries(A.recovery), asks = guardAsks();
   return `<h2>アカウント</h2>
@@ -424,6 +430,7 @@ function acctHtml() {
       <div>${gDraft.list.length ? gDraft.list.map(id => `<div class="gl"><span>${esc(H(id))}</span><button type="button" class="link" data-act="g-del" data-id="${id}">外す</button></div>`).join("") : `<p class="small" style="margin:0">まだいません</p>`}</div>
       ${gDraft.list.length < AC.R.maxGuardians ? `<div style="display:flex;gap:8px"><input id="g-add" placeholder="@なまえ" autocapitalize="none" spellcheck="false"><button type="button" data-act="g-add">足す</button></div>` : ""}
       ${gDraft.list.length ? `<label>何人の承認で取り戻せるか<input id="g-need" type="number" min="1" max="${gDraft.list.length}" value="${Math.min(gDraft.need, gDraft.list.length)}"></label>` : ""}
+      ${A.pendingGuard ? `<p class="small" style="margin:0;color:var(--warn)">替えた信頼できる人は、${Math.max(1, Math.ceil((A.pendingGuard.at + AC.R.wait - now()) / 86400))}日後に効きます（かぎを盗まれたとき、すぐに替えられないようにするため）。それまでは前の人たちで取り戻せます。</p>` : ""}
       <p class="small" id="g-msg" style="margin:0;color:var(--warn)" role="alert"></p>
       <button type="button" data-act="g-save">決める</button></div>
     <div class="card grid2"><b>この端末</b>
@@ -461,6 +468,11 @@ async function act(a, t){
   const id = t && t.dataset.id;
   if (a === "open") return openAccount($("#nm").value);
   if (a === "reopen") return reopen();
+  if (a === "name") {
+    const h = ($("#nm").value || "").trim().toLowerCase().replace(/^@/, "");
+    if (!AC.HANDLE.test(h) || AS.byHandle[h]) { note = {k: "warn", m: AS.byHandle[h] ? `@${h} はもう使われています。` : "英小文字・数字・ハイフンで2〜20文字にしてください。"}; return render(); }
+    await emitA({t: "name", handle: h}); note = null; return render();
+  }
   if (a === "lost") return openPanel(lostHtml());
   if (a === "lost-go") {
     const X = AC.byHandle(AS, $("#lost-h").value);

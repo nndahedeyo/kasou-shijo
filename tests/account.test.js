@@ -53,3 +53,29 @@ test("Keccak-256 と、かぎから作るチェーンのアドレス（公式の
   assert.equal("0x" + h(K.keccak256(Sig.pubXY("0".repeat(63) + "1"))).slice(24), "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf");
   assert.equal("0x" + h(K.keccak256(Sig.pubXY("0".repeat(63) + "2"))).slice(24), "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf");
 });
+
+test("名前なしで始めて、あとから名前を決められる。決めた名前は変えられない", () => {
+  const S = reduce([ev(P("a"), 1, {t: "open", display: "あおい"}), ev(P("a"), 2, {t: "name", handle: "aoi"}), ev(P("a"), 3, {t: "name", handle: "other"}), open(P("b"), "aoi", 4)], 10);
+  assert.equal(S.accounts[P("a")].handle, "aoi"); assert.equal(S.accounts[P("b")], undefined); assert.equal(byHandle(S, "other"), null);
+});
+test("かぎを盗まれたとき：信頼できる人を替えるのは3日後。そのあいだは前の人たちで取り戻せ、全員の承認は取り消せない", () => {
+  const e = [open(P("a"), "nnda"), open(P("b"), "bob"), open(P("c"), "cat"), open(P("9"), "thief"),
+    ev(P("a"), 5, {t: "guard", list: [P("b"), P("c")], need: 2}),
+    ev(P("a"), 10, {t: "guard", list: [P("9")], need: 1}),                        // 盗んだ人が自分の仲間に替えようとする
+    ev(P("f"), 11, {t: "ask", account: P("a")}),                                   // 本人が新しい端末で取り戻しを頼む
+    ev(P("b"), 12, {t: "approve", account: P("a"), to: P("f")}), ev(P("c"), 13, {t: "approve", account: P("a"), to: P("f")}),
+    ev(P("a"), 14, {t: "cancel", to: P("f")})];                                    // 盗んだ人が取り消そうとする
+  let S = reduce(e, 14 + DAY); assert.deepEqual(S.accounts[P("a")].guard.list, [P("b"), P("c")]); assert.ok(S.accounts[P("a")].recovery[P("f")].all);
+  S = reduce(e, 13 + 3 * DAY); assert.equal(S.accounts[P("a")].key, P("f"));      // 取り戻しが先に効き、盗んだ人の替え（3日後）は効かない
+  assert.deepEqual(S.accounts[P("a")].guard.list, [P("b"), P("c")]);
+});
+test("一部の承認だけなら、本人が取り消せる（信頼した人の一部が組んでも乗っ取れない）", () => {
+  const e = [open(P("a"), "nnda"), open(P("b"), "bob"), open(P("c"), "cat"), ev(P("a"), 5, {t: "guard", list: [P("b"), P("c")], need: 1}),
+    ev(P("f"), 10, {t: "ask", account: P("a")}), ev(P("b"), 11, {t: "approve", account: P("a"), to: P("f")}), ev(P("a"), 12, {t: "cancel", to: P("f")})];
+  assert.equal(reduce(e, 12 + 5 * DAY).accounts[P("a")].key, P("a"));
+});
+test("ある時刻に、そのかぎがどのアカウントのものだったか", () => {
+  const {ownerAt} = require("../core/account.js");
+  const S = reduce([open(P("a"), "nnda", 1), ev(P("a"), 10, {t: "rotate", to: P("d")})], 20);
+  assert.equal(ownerAt(S, P("a"), 5), P("a")); assert.equal(ownerAt(S, P("a"), 15), null); assert.equal(ownerAt(S, P("d"), 15), P("a")); assert.equal(ownerAt(S, P("d"), 5), null);
+});
